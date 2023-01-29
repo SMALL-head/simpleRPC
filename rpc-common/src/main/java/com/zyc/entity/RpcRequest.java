@@ -2,6 +2,9 @@ package com.zyc.entity;
 
 import java.io.Serializable;
 
+/**
+ * Rpc请求参数
+ */
 public class RpcRequest implements Serializable {
     private String interfaceName;
     private String methodName;
@@ -15,6 +18,7 @@ public class RpcRequest implements Serializable {
         this.paramClassType = paramClassType;
     }
 
+    // constructor, getters and setters
     public RpcRequest() {
     }
 

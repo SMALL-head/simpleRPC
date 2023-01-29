@@ -1,14 +1,17 @@
 package com.zyc.entity;
 
-import java.io.ObjectStreamException;
-import java.io.Serial;
 import java.io.Serializable;
 
+/**
+ * 声明Rpc返回值消息
+ * @param <T> 返回值类型
+ */
 public class RpcResponse<T> implements Serializable {
     private T response;
 
     private Class<?> responseType;
 
+    // constructor, getters and setters
     public T getResponse() {
         return response;
     }

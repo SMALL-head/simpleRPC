@@ -10,6 +10,14 @@
     </parent>
 
     <artifactId>rpc-core</artifactId>
+    <dependencies>
+        <dependency>
+            <groupId>cglib</groupId>
+            <artifactId>cglib-nodep</artifactId>
+            <version>3.3.0</version>
+        </dependency>
+
+    </dependencies>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
