@@ -16,6 +16,12 @@
             <artifactId>cglib-nodep</artifactId>
             <version>3.3.0</version>
         </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>4.1.87.Final</version>
+        </dependency>
+
 
     </dependencies>
 
