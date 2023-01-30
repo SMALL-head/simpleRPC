@@ -11,6 +11,8 @@
     <modules>
         <module>rpc-common</module>
         <module>rpc-core</module>
+        <module>rpc-registry-center</module>
+        <module>rpc-service</module>
     </modules>
     <dependencies>
         <dependency>
