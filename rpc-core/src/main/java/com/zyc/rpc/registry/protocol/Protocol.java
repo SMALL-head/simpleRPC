@@ -7,9 +7,16 @@ import com.zyc.utils.ByteUtils;
 import com.zyc.utils.Hessian2Utils;
 import io.netty.buffer.ByteBuf;
 
-import javax.swing.*;
-import java.util.Arrays;
-
+/**
+ * 协议结构
+ * +----------------------------------------------------------------------------------+
+ * | 魔数(4B)| 请求类型{@link ProtocolTypeEnum} (1B) | 版本号(1B) | 内容大小，单位为B(2B) |
+ * +----------------------------------------------------------------------------------+
+ * |                                                                                  |
+ * |                               内容数据                                            |
+ * |                                                                                  |
+ * +----------------------------------------------------------------------------------+
+ */
 public class Protocol {
     /**
      * 通过rpcRegisterRequest，返回序列化后的byte数组
@@ -27,7 +34,7 @@ public class Protocol {
         System.arraycopy(ByteUtils.int2byteArray(Constants.MAGIC_NUMBER), 0, res, 0, 4);
         System.arraycopy(new byte[]{ProtocolTypeEnum.REGISTRY_SERVICE.getByteValue()}, 0, res, 4, 1);
         System.arraycopy(new byte[]{Constants.PROTOCOL_VERSION}, 0, res, 5, 1);
-        short size = (short) (serialize.length + 8);
+        short size = (short) (serialize.length);
         System.arraycopy(ByteUtils.short2byteArray(size), 0, res, 6, 2);
         return res;
     }
@@ -41,7 +48,7 @@ public class Protocol {
 
 
 
-        byte[] serviceBytes = new byte[size-8];
+        byte[] serviceBytes = new byte[size];
         content.readBytes(serviceBytes);
         Object deserialize = Hessian2Utils.deserialize(serviceBytes);
         return (RpcRegisterRequest) deserialize;
