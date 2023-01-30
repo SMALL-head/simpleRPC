@@ -22,7 +22,7 @@ public class ServiceRegistryCenter {
             .childHandler(new ChannelInitializer<NioSocketChannel>() {
                 @Override
                 protected void initChannel(NioSocketChannel channel) throws Exception {
-
+//                    channel.pipeline().addLast("");
                 }
             }).bind(port);
     }

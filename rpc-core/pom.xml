@@ -21,8 +21,11 @@
             <artifactId>netty-all</artifactId>
             <version>4.1.87.Final</version>
         </dependency>
-
-
+        <dependency>
+            <groupId>com.zyc</groupId>
+            <artifactId>rpc-common</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <properties>
