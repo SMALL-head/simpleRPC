@@ -9,7 +9,7 @@ import com.zyc.entity.registry.SocketInfo;
 public interface ServiceRegistry {
     /**
      * 向注册中心注册服务
-     * @param service 其实质应该是是一个类，其会将该类对应的方法均注册
+     * @param service 通过方法名进行注册，同时将该service的host和port记录
      * @return 注册成功则返回true；注册失败则返回false
      */
     boolean registry(String service, String host, int port);

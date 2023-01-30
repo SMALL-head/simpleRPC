@@ -1,4 +1,4 @@
-package com.zyc.entity;
+package com.zyc.entity.IO;
 
 import java.io.Serializable;
 
