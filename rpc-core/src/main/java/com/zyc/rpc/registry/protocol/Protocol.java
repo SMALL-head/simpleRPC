@@ -11,6 +11,12 @@ import javax.swing.*;
 import java.util.Arrays;
 
 public class Protocol {
+    /**
+     * 通过rpcRegisterRequest，返回序列化后的byte数组
+     * @param rpcRegisterRequest rpcRegisterRequest,注册中心请求参数
+     * @return 序列化后的结果
+     * @throws Exception 序列化过程的错误
+     */
     static public byte[] generateProtocol(RpcRegisterRequest rpcRegisterRequest) throws Exception {
 
         byte[] serialize = Hessian2Utils.serialize(rpcRegisterRequest);
