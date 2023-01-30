@@ -1,4 +1,4 @@
-import com.zyc.entity.RpcResponse;
+import com.zyc.entity.IO.RpcResponse;
 import org.junit.Test;
 
 public class EnumTest {

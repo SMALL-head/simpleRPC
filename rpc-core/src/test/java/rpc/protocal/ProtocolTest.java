@@ -1,11 +1,12 @@
 package rpc.protocal;
 
 import com.zyc.constants.Constants;
-import com.zyc.entity.RpcRegisterRequest;
-import com.zyc.entity.RpcResponse;
+import com.zyc.entity.registry.RpcRegisterRequestData;
+import com.zyc.entity.IO.RpcResponse;
+import com.zyc.entity.registry.RpcRegistryRequest;
 import com.zyc.enums.ProtocolTypeEnum;
-import com.zyc.netty.ByteToRpcRegisterRequestDecoder;
-import com.zyc.netty.RpcRegisterRequestToByteEncoder;
+import com.zyc.netty.ByteToRpcRegistryRequestDecoder;
+import com.zyc.netty.RpcRegistryRequestToByteEncoder;
 import com.zyc.rpc.registry.protocol.Protocol;
 import com.zyc.utils.ByteUtils;
 import com.zyc.utils.Hessian2Utils;
@@ -15,6 +16,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.embedded.EmbeddedChannel;
 import org.junit.Test;
+import rpc.serviceDemo.ServiceDemoImpl;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -29,31 +31,31 @@ public class ProtocolTest {
         EmbeddedChannel embeddedChannel = new EmbeddedChannel();
         embeddedChannel
             .pipeline()
-            .addLast(new RpcRegisterRequestToByteEncoder())
-            .addLast(new ByteToRpcRegisterRequestDecoder())
+            .addLast(new RpcRegistryRequestToByteEncoder())
+            .addLast(new ByteToRpcRegistryRequestDecoder())
             .addLast(new ChannelInboundHandlerAdapter() {
                 @Override
                 public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-                    RpcRegisterRequest request = (RpcRegisterRequest) msg;
+                    RpcRegistryRequest request = (RpcRegistryRequest) msg;
                     System.out.println(request);
                 }
             });
         Method declaredMethod = RpcResponse.class.getDeclaredMethods()[1];
-        RpcRegisterRequest rpcRegisterRequest = new RpcRegisterRequest(Constants.LOCALHOST, 100023, declaredMethod.getName(), declaredMethod.getParameterTypes(), declaredMethod.getReturnType());
-        embeddedChannel.writeInbound(rpcRegisterRequest);
+        RpcRegisterRequestData rpcRegisterRequestData = new RpcRegisterRequestData(Constants.LOCALHOST, 100023, ServiceDemoImpl.class.getCanonicalName()  );
+        RpcRegistryRequest request = new RpcRegistryRequest(rpcRegisterRequestData, Constants.PROTOCOL_VERSION, ProtocolTypeEnum.REGISTRY_SERVICE);
+        embeddedChannel.writeInbound(request);
 
     }
 
     /**
      * 乱七八糟的协议测试
-     * @throws Exception
      */
     @Test
     public void test_protocol() throws Exception {
         ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer();
-        int magic = 0x123;
+        int magic = Constants.MAGIC_NUMBER;
         byte value = ProtocolTypeEnum.REGISTRY_SERVICE.getByteValue();
-        byte version = (byte) 1;
+        byte version = Constants.PROTOCOL_VERSION;
 
         Method declaredMethod = RpcResponse.class.getDeclaredMethods()[1];
         System.out.println(declaredMethod.getName());
@@ -64,17 +66,17 @@ public class ProtocolTest {
         ByteBuf byteBuf = ByteBufAllocator.DEFAULT.buffer();
 
         System.out.println("byteBuf.capacity() = " + byteBuf.readableBytes());
-        RpcRegisterRequest rpcRegisterRequest = new RpcRegisterRequest(Constants.LOCALHOST, 100023, declaredMethod.getName(), declaredMethod.getParameterTypes(), declaredMethod.getReturnType());
+        RpcRegisterRequestData rpcRegisterRequestData = new RpcRegisterRequestData(Constants.LOCALHOST, 100023, ServiceDemoImpl.class.getCanonicalName());
 
         // 测试hessian2序列化
-        byte[] serialize = Hessian2Utils.serialize(rpcRegisterRequest);
+        byte[] serialize = Hessian2Utils.serialize(rpcRegisterRequestData);
         System.out.println("serialize = " + serialize.length);
-        short size = (short) (8 + serialize.length);
+        short size = (short) (serialize.length);
         byteBuf.writeInt(magic).writeByte(value).writeByte(version).writeShort(size);
         byteBuf.writeBytes(serialize);
 
         // 验证协议生成和解析
-        byte[] bytesFromUtils = Protocol.generateProtocol(rpcRegisterRequest);
+        byte[] bytesFromUtils = Protocol.generateProtocol(rpcRegisterRequestData, ProtocolTypeEnum.REGISTRY_SERVICE);
         System.out.println("bytesFromUtils.length = " + bytesFromUtils.length);
         System.out.println("byteBuf.readableBytes() = " + byteBuf.readableBytes());
 
@@ -86,8 +88,8 @@ public class ProtocolTest {
 //            }
 //        }
 
-        RpcRegisterRequest rpcRegisterRequest1 = Protocol.parseProtocol(byteBuf);
-        System.out.println(rpcRegisterRequest1);
+        RpcRegistryRequest rpcRegisterRequestData1 = Protocol.parseProtocol(byteBuf);
+        System.out.println(rpcRegisterRequestData1);
 
     }
     @Test

@@ -8,7 +8,7 @@ import io.netty.handler.codec.ReplayingDecoder;
 
 import java.util.List;
 
-public class ByteToRpcRegisterRequestDecoder extends ReplayingDecoder<Void> {
+public class ByteToRpcRegistryRequestDecoder extends ReplayingDecoder<Void> {
     @Override
     protected void decode(ChannelHandlerContext context, ByteBuf byteBuf, List<Object> list) throws Exception {
         RpcRegistryRequest rpcRegisterRequestData = Protocol.parseProtocol(byteBuf);
