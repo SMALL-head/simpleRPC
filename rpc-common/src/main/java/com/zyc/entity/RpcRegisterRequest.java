@@ -1,7 +1,6 @@
 package com.zyc.entity;
 
 import java.io.Serializable;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 
 public class RpcRegisterRequest implements Serializable {

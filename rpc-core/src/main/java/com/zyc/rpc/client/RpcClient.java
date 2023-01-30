@@ -4,6 +4,7 @@ public class RpcClient {
     final static String LOCALHOST = "127.0.0.1";
     String host;
     int port;
+    // todo：rpc调用的client过程尚未开始
 
     public RpcClient(String host, int port) {
         this.host = host;
