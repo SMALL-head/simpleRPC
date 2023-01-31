@@ -2,17 +2,11 @@ package com.zyc.entity.registry;
 
 import com.zyc.enums.ProtocolTypeEnum;
 
-public class RpcRegistryRequest {
-    private RpcRegisterRequestData data;
+import java.io.Serializable;
 
-    @Override
-    public String toString() {
-        return "RpcRegistryRequest{" +
-            "data=" + data +
-            ", version=" + version +
-            ", type=" + type +
-            '}';
-    }
+public class RpcRegistryRequest implements Serializable {
+
+    private RpcRegisterRequestData data;
 
     private int version;
 
@@ -46,5 +40,14 @@ public class RpcRegistryRequest {
 
     public void setType(ProtocolTypeEnum type) {
         this.type = type;
+    }
+
+    @Override
+    public String toString() {
+        return "RpcRegistryRequest{" +
+            "data=" + data +
+            ", version=" + version +
+            ", type=" + type +
+            '}';
     }
 }

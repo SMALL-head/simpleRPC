@@ -1,6 +1,8 @@
 package com.zyc.entity.registry;
 
-public class SocketInfo {
+import java.io.Serializable;
+
+public class SocketInfo implements Serializable {
     private String host;
     private int port;
 
@@ -23,5 +25,10 @@ public class SocketInfo {
 
     public void setPort(int port) {
         this.port = port;
+    }
+
+    @Override
+    public String toString() {
+        return host + ":" + port;
     }
 }
