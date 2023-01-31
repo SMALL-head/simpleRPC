@@ -76,7 +76,7 @@ public class ProtocolTest {
         byteBuf.writeBytes(serialize);
 
         // 验证协议生成和解析
-        byte[] bytesFromUtils = Protocol.generateProtocol(rpcRegisterRequestData, ProtocolTypeEnum.REGISTRY_SERVICE);
+        byte[] bytesFromUtils = Protocol.generateRequestProtocol(rpcRegisterRequestData, ProtocolTypeEnum.REGISTRY_SERVICE);
         System.out.println("bytesFromUtils.length = " + bytesFromUtils.length);
         System.out.println("byteBuf.readableBytes() = " + byteBuf.readableBytes());
 
@@ -88,7 +88,7 @@ public class ProtocolTest {
 //            }
 //        }
 
-        RpcRegistryRequest rpcRegisterRequestData1 = Protocol.parseProtocol(byteBuf);
+        RpcRegistryRequest rpcRegisterRequestData1 = Protocol.parseRequestProtocol(byteBuf);
         System.out.println(rpcRegisterRequestData1);
 
     }

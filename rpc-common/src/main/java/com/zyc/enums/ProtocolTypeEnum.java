@@ -3,7 +3,9 @@ package com.zyc.enums;
 public enum ProtocolTypeEnum {
     REGISTRY_SERVICE((byte)0x1, "注册服务"),
     GET_SERVICE((byte)0x2, "获取服务"),
-    OFFLINE_SERVICE((byte)0x3, "服务下线");
+    OFFLINE_SERVICE((byte)0x3, "服务下线"),
+    REGISTRY_RESPONSE((byte)0x4, "注册中心响应");
+
     final byte value;
     final String desc;
 

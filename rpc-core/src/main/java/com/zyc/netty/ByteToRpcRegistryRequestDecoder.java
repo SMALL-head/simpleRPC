@@ -11,7 +11,11 @@ import java.util.List;
 public class ByteToRpcRegistryRequestDecoder extends ReplayingDecoder<Void> {
     @Override
     protected void decode(ChannelHandlerContext context, ByteBuf byteBuf, List<Object> list) throws Exception {
-        RpcRegistryRequest rpcRegisterRequestData = Protocol.parseProtocol(byteBuf);
-        list.add(rpcRegisterRequestData);
+        try {
+            RpcRegistryRequest rpcRegisterRequest = Protocol.parseRequestProtocol(byteBuf);
+            list.add(rpcRegisterRequest);
+        } catch (Exception ex) {
+            list.add(byteBuf); // 产生异常后交给其他decoder处理
+        }
     }
 }
