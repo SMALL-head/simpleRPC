@@ -1,4 +1,4 @@
-package com.zyc.rpc.registry.protocol;
+package com.zyc.protocol;
 
 import com.zyc.constants.Constants;
 import com.zyc.entity.registry.RpcRegisterRequestData;
