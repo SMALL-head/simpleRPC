@@ -1,10 +1,12 @@
 package com.zyc.enums;
 
 public enum ProtocolTypeEnum {
-    REGISTRY_SERVICE((byte)0x1, "注册服务"),
-    GET_SERVICE((byte)0x2, "获取服务"),
-    OFFLINE_SERVICE((byte)0x3, "服务下线"),
-    REGISTRY_RESPONSE((byte)0x4, "注册中心响应");
+    REGISTRY_SERVICE((byte) 0x1, "注册服务"),
+    GET_SERVICE((byte) 0x2, "获取服务"),
+    OFFLINE_SERVICE((byte) 0x3, "服务下线"),
+    REGISTRY_RESPONSE((byte) 0x4, "注册中心响应"),
+    RPC_CALL((byte) 0x5, "请求调用"),
+    RPC_RESPONSE((byte) 0x6, "调用响应");
 
     final byte value;
     final String desc;
@@ -21,6 +23,7 @@ public enum ProtocolTypeEnum {
     /**
      * 根据value变量获取枚举变量，比如传入1可以得到"注册服务"的REGISTRY_SERVICE。
      * 返回值可能为空，因此必要时候需要进行nullptr校验
+     *
      * @param value value值，比如
      * @return 对应的枚举变量；若没有对应的则返回null
      */

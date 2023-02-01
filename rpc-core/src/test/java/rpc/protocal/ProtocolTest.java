@@ -5,8 +5,8 @@ import com.zyc.entity.registry.RpcRegisterRequestData;
 import com.zyc.entity.IO.RpcResponse;
 import com.zyc.entity.registry.RpcRegistryRequest;
 import com.zyc.enums.ProtocolTypeEnum;
-import com.zyc.netty.ByteToRpcRegistryRequestDecoder;
-import com.zyc.netty.RpcRegistryRequestToByteEncoder;
+import com.zyc.netty.registry.ByteToRpcRegistryRequestDecoder;
+import com.zyc.netty.registry.RpcRegistryRequestToByteEncoder;
 import com.zyc.rpc.registry.protocol.Protocol;
 import com.zyc.utils.ByteUtils;
 import com.zyc.utils.Hessian2Utils;
@@ -76,7 +76,7 @@ public class ProtocolTest {
         byteBuf.writeBytes(serialize);
 
         // 验证协议生成和解析
-        byte[] bytesFromUtils = Protocol.generateRequestProtocol(rpcRegisterRequestData, ProtocolTypeEnum.REGISTRY_SERVICE);
+        byte[] bytesFromUtils = Protocol.generateRegistryRequestProtocol(rpcRegisterRequestData, ProtocolTypeEnum.REGISTRY_SERVICE);
         System.out.println("bytesFromUtils.length = " + bytesFromUtils.length);
         System.out.println("byteBuf.readableBytes() = " + byteBuf.readableBytes());
 
@@ -88,7 +88,7 @@ public class ProtocolTest {
 //            }
 //        }
 
-        RpcRegistryRequest rpcRegisterRequestData1 = Protocol.parseRequestProtocol(byteBuf);
+        RpcRegistryRequest rpcRegisterRequestData1 = Protocol.parseRegistryRequestProtocol(byteBuf);
         System.out.println(rpcRegisterRequestData1);
 
     }

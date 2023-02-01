@@ -1,4 +1,4 @@
-package com.zyc.netty;
+package com.zyc.netty.registry;
 
 import com.zyc.entity.registry.RpcRegistryRequest;
 import com.zyc.rpc.registry.protocol.Protocol;
@@ -9,7 +9,7 @@ import io.netty.handler.codec.MessageToByteEncoder;
 public class RpcRegistryRequestToByteEncoder extends MessageToByteEncoder<RpcRegistryRequest> {
     @Override
     protected void encode(ChannelHandlerContext context, RpcRegistryRequest request, ByteBuf byteBuf) throws Exception {
-        byte[] bytes = Protocol.generateRequestProtocol(request.getData(), request.getType());
+        byte[] bytes = Protocol.generateRegistryRequestProtocol(request.getData(), request.getType());
         byteBuf.writeBytes(bytes);
     }
 }

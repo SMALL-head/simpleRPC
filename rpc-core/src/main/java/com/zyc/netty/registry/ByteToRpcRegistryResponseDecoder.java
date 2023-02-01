@@ -1,4 +1,4 @@
-package com.zyc.netty;
+package com.zyc.netty.registry;
 
 import com.zyc.entity.registry.RpcRegistryResponse;
 import com.zyc.rpc.registry.protocol.Protocol;
