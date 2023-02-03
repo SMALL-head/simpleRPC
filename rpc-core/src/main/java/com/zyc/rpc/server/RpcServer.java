@@ -90,9 +90,9 @@ public class RpcServer {
                                     return;
                                 }
                                 if (ResponseStatusEnum.SUCCESS_REGISTRY.equals(response.getResponseStatus())) {
-                                    log.info("成功注册服务-{}", response.getMsg());
+                                    log.info("[RpcServer]-成功注册服务-{}", response.getMsg());
                                 } else {
-                                    log.error("注册服务失败");
+                                    log.error("[RpcServer]-注册服务失败");
                                 }
                                 ctx.fireChannelRead(msg);
                             }

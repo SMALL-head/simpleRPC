@@ -7,7 +7,7 @@ import com.zyc.entity.registry.RpcRegistryRequest;
 import com.zyc.enums.ProtocolTypeEnum;
 import com.zyc.netty.registry.ByteToRpcRegistryRequestDecoder;
 import com.zyc.netty.registry.RpcRegistryRequestToByteEncoder;
-import com.zyc.rpc.registry.protocol.Protocol;
+import com.zyc.protocol.Protocol;
 import com.zyc.utils.ByteUtils;
 import com.zyc.utils.Hessian2Utils;
 import io.netty.buffer.ByteBuf;

@@ -1,7 +1,7 @@
 package com.zyc.netty.rpc;
 
 import com.zyc.entity.rpc.GenericReturn;
-import com.zyc.rpc.registry.protocol.Protocol;
+import com.zyc.protocol.Protocol;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;

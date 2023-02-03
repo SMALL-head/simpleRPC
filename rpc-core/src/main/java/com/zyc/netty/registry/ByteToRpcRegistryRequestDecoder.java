@@ -1,7 +1,7 @@
 package com.zyc.netty.registry;
 
 import com.zyc.entity.registry.RpcRegistryRequest;
-import com.zyc.rpc.registry.protocol.Protocol;
+import com.zyc.protocol.Protocol;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ReplayingDecoder;
