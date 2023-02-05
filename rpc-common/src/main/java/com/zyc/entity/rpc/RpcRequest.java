@@ -1,11 +1,15 @@
 package com.zyc.entity.rpc;
 
+import com.zyc.utils.UUIDUtils;
 import lombok.ToString;
 
 import java.io.Serializable;
+import java.lang.reflect.Method;
+import java.util.UUID;
 
 @ToString
 public class RpcRequest implements Serializable {
+    String msgID;
     String serviceName;
     String serviceMethod;
     Object[] params;
@@ -16,6 +20,7 @@ public class RpcRequest implements Serializable {
         this.serviceMethod = serviceMethod;
         this.params = params;
         this.paramsType = paramsTypes;
+        this.msgID = UUIDUtils.getUUiD();
     }
 
     public RpcRequest() {
@@ -51,5 +56,9 @@ public class RpcRequest implements Serializable {
 
     public void setParamsType(Class<?>[] paramsType) {
         this.paramsType = paramsType;
+    }
+
+    public String getMsgID() {
+        return msgID;
     }
 }

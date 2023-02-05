@@ -1,34 +1,16 @@
 package com.zyc.rpc.client;
 
-public class RpcClient {
-    final static String LOCALHOST = "127.0.0.1";
-    String host;
-    int port;
-    // todo：rpc调用的client过程尚未开始
+import com.zyc.entity.registry.RpcRegistryRequest;
+import com.zyc.entity.registry.RpcRegistryResponse;
+import com.zyc.entity.registry.SocketInfo;
+import com.zyc.entity.rpc.GenericReturn;
+import com.zyc.entity.rpc.RpcRequest;
 
-    public RpcClient(String host, int port) {
-        this.host = host;
-        this.port = port;
-    }
+import java.util.concurrent.CompletableFuture;
 
-    public RpcClient() {
-        this.host = LOCALHOST;
-        this.port = 8080;
-    }
+public interface RpcClient {
 
-    public String getHost() {
-        return host;
-    }
+    CompletableFuture<RpcRegistryResponse> sendRegistryRequest(RpcRegistryRequest request);
 
-    public void setHost(String host) {
-        this.host = host;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public void setPort(int port) {
-        this.port = port;
-    }
+    CompletableFuture<GenericReturn> sendRpcRequest(RpcRequest request, SocketInfo serviceProviderSocketInfo);
 }

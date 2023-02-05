@@ -4,9 +4,11 @@ import com.zyc.enums.ResponseStatusEnum;
 
 import java.io.Serializable;
 import java.util.Map;
+import java.util.UUID;
 
 public class RpcRegistryResponse implements Serializable {
     public final static String SOCKET_ADDR_MAP_KEY = "SocketAddr";
+    private String msgID;
     String msg;
 
     Map<String, Object> info;
@@ -15,6 +17,13 @@ public class RpcRegistryResponse implements Serializable {
 
     public ResponseStatusEnum getResponseStatus() {
         return responseStatus;
+    }
+
+    public RpcRegistryResponse(String msgID, String msg, Map<String, Object> info, ResponseStatusEnum responseStatus) {
+        this.msgID = msgID;
+        this.msg = msg;
+        this.info = info;
+        this.responseStatus = responseStatus;
     }
 
     public void setResponseStatus(ResponseStatusEnum responseStatus) {
@@ -44,5 +53,9 @@ public class RpcRegistryResponse implements Serializable {
 
     public void setInfo(Map<String, Object> info) {
         this.info = info;
+    }
+
+    public String getMsgID() {
+        return msgID;
     }
 }

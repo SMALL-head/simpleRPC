@@ -13,6 +13,7 @@ import com.zyc.netty.registry.ByteToRpcRegistryResponseDecoder;
 import com.zyc.netty.registry.RpcRegistryRequestToByteEncoder;
 import com.zyc.netty.rpc.ByteToRpcRequestDecoder;
 import com.zyc.netty.rpc.GenericReturnToByteEncoder;
+import com.zyc.rpc.registry.config.RegistryConfig;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
@@ -32,14 +33,9 @@ public class RpcServer {
     String host;
     int port;
 
-    SocketInfo registrySocketInfo = null;
-
     NioEventLoopGroup parentEventLoop;
 
     public void startServer() throws Exception {
-        if (registrySocketInfo == null) {
-            throw new Exception("未指明服务注册中心IP地址与端口号");
-        }
         parentEventLoop = new NioEventLoopGroup();
         new ServerBootstrap()
             .channel(NioServerSocketChannel.class)
@@ -53,6 +49,7 @@ public class RpcServer {
                         .addLast(new ChannelInboundHandlerAdapter(){
                             @Override
                             public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+                                log.info("[RpcServer]-[startServer]-接收到msg，类型为-{}", msg.getClass());
                                 if (!(msg instanceof RpcRequest request)) {
                                     return;
                                 }
@@ -60,19 +57,27 @@ public class RpcServer {
                                 String serviceName = request.getServiceName();
                                 ServiceProvider<?> serviceProvider = serviceProviderMap.get(serviceName);
                                 if (serviceProvider == null) {
-                                    log.warn("为寻找到服务{}", serviceName);
+                                    log.warn("未寻找到服务{}", serviceName);
                                     ctx.fireChannelRead(msg);
                                     return;
                                 }
+                                GenericReturn genericReturn;
+                                try {
 
-                                GenericReturn genericReturn = serviceProvider.callService(request.getServiceMethod(), request.getParams(), request.getParamsType());
+                                     genericReturn = serviceProvider.callService(request);
+                                } catch (Exception e) {
+                                    ctx.fireChannelRead(msg);
+                                    throw e;
+                                }
                                 log.info("成功调用服务{}", serviceName);
                                 ch.writeAndFlush(genericReturn);
                                 ctx.fireChannelRead(msg);
                             }
                         });
                 }
-            }).bind(port);
+            })
+            .bind(port);
+        log.info("[RpcServer]-[startServer]-rpc服务提供方服务器注册host={}-port={}", host, port);
 
         ChannelFuture connect = new Bootstrap()
             .channel(NioSocketChannel.class)
@@ -99,7 +104,7 @@ public class RpcServer {
                         });
                 }
             })
-            .connect(registrySocketInfo.getHost(), registrySocketInfo.getPort());
+            .connect(RegistryConfig.getHost(), RegistryConfig.getPort());
         connect.sync();
         Channel channel = connect.channel();
         sendRegistryRequest(channel);
@@ -144,13 +149,5 @@ public class RpcServer {
 
     public void setPort(int port) {
         this.port = port;
-    }
-
-    public SocketInfo getRegistrySocketInfo() {
-        return registrySocketInfo;
-    }
-
-    public void setRegistrySocketInfo(SocketInfo registrySocketInfo) {
-        this.registrySocketInfo = registrySocketInfo;
     }
 }

@@ -2,8 +2,8 @@ package rpc.protocal;
 
 import com.zyc.constants.Constants;
 import com.zyc.entity.registry.RpcRegisterRequestData;
-import com.zyc.entity.IO.RpcResponse;
 import com.zyc.entity.registry.RpcRegistryRequest;
+import com.zyc.entity.rpc.GenericReturn;
 import com.zyc.enums.ProtocolTypeEnum;
 import com.zyc.netty.registry.ByteToRpcRegistryRequestDecoder;
 import com.zyc.netty.registry.RpcRegistryRequestToByteEncoder;
@@ -40,7 +40,6 @@ public class ProtocolTest {
                     System.out.println(request);
                 }
             });
-        Method declaredMethod = RpcResponse.class.getDeclaredMethods()[1];
         RpcRegisterRequestData rpcRegisterRequestData = new RpcRegisterRequestData(Constants.LOCALHOST, 100023, ServiceDemoImpl.class.getCanonicalName()  );
         RpcRegistryRequest request = new RpcRegistryRequest(rpcRegisterRequestData, Constants.PROTOCOL_VERSION, ProtocolTypeEnum.REGISTRY_SERVICE);
         embeddedChannel.writeInbound(request);
@@ -57,7 +56,7 @@ public class ProtocolTest {
         byte value = ProtocolTypeEnum.REGISTRY_SERVICE.getByteValue();
         byte version = Constants.PROTOCOL_VERSION;
 
-        Method declaredMethod = RpcResponse.class.getDeclaredMethods()[1];
+        Method declaredMethod = GenericReturn.class.getDeclaredMethods()[1];
         System.out.println(declaredMethod.getName());
         System.out.println(Arrays.toString(declaredMethod.getExceptionTypes()));
         System.out.println(declaredMethod.getReturnType());
@@ -75,21 +74,6 @@ public class ProtocolTest {
         byteBuf.writeInt(magic).writeByte(value).writeByte(version).writeShort(size);
         byteBuf.writeBytes(serialize);
 
-        // 验证协议生成和解析
-        byte[] bytesFromUtils = Protocol.generateRegistryRequestProtocol(rpcRegisterRequestData, ProtocolTypeEnum.REGISTRY_SERVICE);
-        System.out.println("bytesFromUtils.length = " + bytesFromUtils.length);
-        System.out.println("byteBuf.readableBytes() = " + byteBuf.readableBytes());
-
-//        byte[] byteBuf2 = new byte[byteBuf.readableBytes()];
-//        byteBuf.readBytes(byteBuf2);
-//        for (int i = 0; i < byteBuf2.length; ++i) {
-//            if (byteBuf2[i] != bytesFromUtils[i]) {
-//                System.out.println(i);
-//            }
-//        }
-
-        RpcRegistryRequest rpcRegisterRequestData1 = Protocol.parseRegistryRequestProtocol(byteBuf);
-        System.out.println(rpcRegisterRequestData1);
 
     }
     @Test

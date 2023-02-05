@@ -29,13 +29,13 @@ public class Protocol {
     /**
      * 通过rpcRegisterRequest，返回序列化后的byte数组
      *
-     * @param rpcRegisterRequestData rpcRegisterRequest,注册中心请求参数
+     * @param rpcRegisterRequest rpcRegisterRequest,注册中心请求参数
      * @return 序列化后的结果
      * @throws Exception 序列化过程的错误
      */
-    static public byte[] generateRegistryRequestProtocol(RpcRegisterRequestData rpcRegisterRequestData, ProtocolTypeEnum type) throws Exception {
+    static public byte[] generateRegistryRequestProtocol(RpcRegistryRequest rpcRegisterRequest, ProtocolTypeEnum type) throws Exception {
 
-        byte[] serialize = Hessian2Utils.serialize(rpcRegisterRequestData);
+        byte[] serialize = Hessian2Utils.serialize(rpcRegisterRequest);
 
         byte[] res = new byte[serialize.length + 8];
 
@@ -66,9 +66,9 @@ public class Protocol {
         content.readBytes(serviceBytes);
         Object deserialize = Hessian2Utils.deserialize(serviceBytes);
 
-        RpcRegisterRequestData data = (RpcRegisterRequestData) deserialize;
+        RpcRegistryRequest data = (RpcRegistryRequest) deserialize;
 
-        return new RpcRegistryRequest(data, version, protocolType);
+         return data;
     }
 
     private static void generateProtocolHead(byte[] res, int dataLength, ProtocolTypeEnum type) throws ProtocolException {

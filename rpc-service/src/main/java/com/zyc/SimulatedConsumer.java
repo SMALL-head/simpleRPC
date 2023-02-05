@@ -61,6 +61,6 @@ public class SimulatedConsumer {
             new Class<?>[]{int.class, int.class});// 参数类型
         // 发送请求
         Channel channel = connect.channel();
-        channel.writeAndFlush(request);
+        ChannelFuture channelFuture = channel.writeAndFlush(request);
     }
 }
