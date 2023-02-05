@@ -11,7 +11,7 @@ import java.util.UUID;
 public class UUIDUtils {
     static public String getUUiD() {
         String ret;
-        log.info("生成UUID:{}", (ret = UUID.randomUUID().toString()));
+        log.debug("生成UUID:{}", (ret = UUID.randomUUID().toString()));
         return ret;
     }
 }

@@ -109,7 +109,7 @@ public class NettyRpcClient implements RpcClient {
                                     return;
                                 }
                                 future.complete(msg);
-                                log.info("[SimpleChannelInboundHandler]-[channelRead0]-向msgID为{}的future写入结果", msgID);
+                                log.debug("[SimpleChannelInboundHandler]-[channelRead0]-向msgID为{}的future写入结果", msgID);
                                 ctx.fireChannelRead(msg);
                             }
                         });
