@@ -18,4 +18,6 @@ public interface ServiceRegistry {
      * @return 返回对应的service
      */
     SocketInfo getServiceAddr(String serviceName);
+
+    boolean offlineService(String serviveName);
 }

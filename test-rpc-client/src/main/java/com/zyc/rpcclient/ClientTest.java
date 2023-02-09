@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ClientTest {
     public static void main(String[] args) throws InterruptedException {
         RegistryConfig.setSocketInfo(new SocketInfo(Constants.LOCALHOST, 8088));
-        ServiceConsumer<MyService> consumer = new ServiceConsumer<>(MyService.class);
+        ServiceConsumer<MyService> consumer = new ServiceConsumer<>(MyService.class, "service");
 
         MyService serviceProxy = consumer.getServiceProxy();
         int add = serviceProxy.add(1, 2);

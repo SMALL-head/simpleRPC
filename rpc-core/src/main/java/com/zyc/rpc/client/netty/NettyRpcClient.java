@@ -97,7 +97,7 @@ public class NettyRpcClient implements RpcClient {
                     ch.pipeline()
                         .addLast(new ByteToGenericReturnDecoder())
                         .addLast(new RpcRequestToByteEncoder())
-                        .addLast(new SimpleChannelInboundHandler<GenericReturn>() {
+                        .addLast("RpcResultHandler", new SimpleChannelInboundHandler<GenericReturn>() {
                             @Override
                             protected void channelRead0(ChannelHandlerContext ctx, GenericReturn msg) throws Exception {
                                 log.info("[NettyRpcClient]-[SimpleChannelInboundHandler]-收到rpc调用的结果-msgId = {}", msg.getMsgID());
@@ -133,7 +133,7 @@ public class NettyRpcClient implements RpcClient {
 
             log.info("[NettyRpcClient]-[sendRegistryRequest]-向注册中心发送请求-TYPE={}-msgID={}", request.getType(), request.getMsgID());
             registryResponseMap.put(request.getMsgID(), registryResponseFuture);
-            log.info("[NettyPrcClient]-[sendRegistryRequest]-向ChanelMap中注册future,id={}", request.getMsgID());
+            log.debug("[NettyPrcClient]-[sendRegistryRequest]-向ChanelMap中注册future,id={}", request.getMsgID());
         } catch (Exception e) {
             log.error("[NettyRpcClient]-[sendRegistryRequest]-发送RpcRegistryRequest失败");
             registryResponseMap.remove(request.getMsgID());

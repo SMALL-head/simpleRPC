@@ -18,11 +18,8 @@ public class RpcServerVersion1 {
         RegistryConfig.setSocketInfo(new SocketInfo(Constants.LOCALHOST, 8088));
         // 创建一个服务
         MyService myService = new MyServiceImpl();
-        ServiceProvider<MyService> provider1 = new ServiceProvider<>(myService);
-        ConcurrentHashMap<String, ServiceProvider<?>> map = new ConcurrentHashMap<>();
-        map.put(MyService.class.getCanonicalName(), provider1);
-        rpcServer.setServiceProviderMap(map);
-
+        ServiceProvider<MyService> provider1 = new ServiceProvider<>(myService, "service");
+        rpcServer.addService(provider1);
         // 启动服务器
         rpcServer.startServer();
     }

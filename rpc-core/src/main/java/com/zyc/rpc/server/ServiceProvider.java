@@ -4,6 +4,7 @@ import com.zyc.entity.rpc.RpcRequest;
 import com.zyc.enums.RpcErrorEnum;
 import com.zyc.exception.RpcException;
 import com.zyc.entity.rpc.GenericReturn;
+import io.netty.util.internal.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.ObjectStreamException;
@@ -20,8 +21,24 @@ import java.util.Arrays;
 public class ServiceProvider<T> {
     T service;
 
-    public ServiceProvider(T service) {
+    String serviceName;
+
+    public ServiceProvider(T service, String serviceName) {
         this.service = service;
+        if (StringUtil.isNullOrEmpty(serviceName)) {
+            throw new RuntimeException("serviceName不能为空");
+        }
+
+        this.serviceName = serviceName;
+    }
+
+    public ServiceProvider(T service) throws Exception {
+        this.service = service;
+        Class<?>[] interfaces = service.getClass().getInterfaces();
+        if (interfaces.length > 1) {
+            throw new Exception("Service-%s has more than one interface\n".formatted(service.getClass().getCanonicalName()));
+        }
+        this.serviceName = interfaces[0].getCanonicalName();
     }
 
     public GenericReturn callService(RpcRequest request) {
@@ -78,5 +95,21 @@ public class ServiceProvider<T> {
         // 若没有任何方法匹配，那么抛出异常
         Class<?> retType = retValue.getClass();
         return new GenericReturn(msgID, retType, retValue);
+    }
+
+    public T getService() {
+        return service;
+    }
+
+    public void setService(T service) {
+        this.service = service;
+    }
+
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
     }
 }

@@ -33,6 +33,8 @@ public class ServiceConsumer<T> {
 
     final private Class<?> serviceInterface;
 
+    String serviceName;
+
     /**
      * 用来进行服务查找和rpc调用的客户端
      */
@@ -51,7 +53,7 @@ public class ServiceConsumer<T> {
                 Class<?>[] classTypes = method.getParameterTypes();
 
                 // 3. 封装rpc调用参数，并发送
-                RpcRequest request = new RpcRequest(serviceInterface.getCanonicalName(), method.getName(), args, classTypes);
+                RpcRequest request = new RpcRequest(serviceName, method.getName(), args, classTypes);
                 CompletableFuture<GenericReturn> genericReturnCompletableFuture = client.sendRpcRequest(request, new SocketInfo(serviceAddr.getHost(), serviceAddr.getPort()));
                 log.info("[ServiceConsumer]-[proxy]-发送rpc请求-msgID={}-serviceName={}-serviceMethod={}", request.getMsgID(), request.getServiceName(), request.getServiceMethod());
 
@@ -73,13 +75,19 @@ public class ServiceConsumer<T> {
             throw new RpcException(RpcErrorEnum.NOT_A_INTERFACE, "需要一个接口类型");
         }
         this.serviceInterface = serviceInterface;
+        this.serviceName = serviceInterface.getCanonicalName();
     }
 
-    public SocketInfo findServiceAddr() throws InterruptedException {
-        return findServiceAddr(serviceInterface.getCanonicalName());
+    public ServiceConsumer(Class<?> serviceInterface, String serviceName) throws InterruptedException {
+        this(serviceInterface);
+        this.serviceName = serviceName;
     }
 
-    private SocketInfo findServiceAddr(String serviceName) throws InterruptedException {
+    public SocketInfo findServiceAddr() throws Exception {
+        return findServiceAddr(serviceName);
+    }
+
+    private SocketInfo findServiceAddr(String serviceName) throws Exception {
         // 1. 封装并发送
         RpcRegisterRequestData data = new RpcRegisterRequestData(null, 0, serviceName);
         RpcRegistryRequest request = new RpcRegistryRequest(data, Constants.PROTOCOL_VERSION, ProtocolTypeEnum.GET_SERVICE);
@@ -95,10 +103,10 @@ public class ServiceConsumer<T> {
         } catch (TimeoutException e) {
             throw new RpcException(RpcErrorEnum.INVOKE_TIMEOUT, "响应超时");
         }
-        if (rpcRegistryResponse.getResponseStatus() != ResponseStatusEnum.SUCCESS_GET_SERVICE) {
-            log.warn("[ServiceConsumer]-[findServiceAddr]-响应类型有误，本应该为SUCCESS_GET_SERVICE，实际获得{}",
-                rpcRegistryResponse.getResponseStatus());
-            throw new RpcException(RpcErrorEnum.SERVICE_NOT_FOUND, "[ServiceConsumer]-[findServiceAddr]-响应类型有误");
+        if (rpcRegistryResponse.getResponseStatus() == ResponseStatusEnum.FAIL_GET_SERVICE) {
+            log.warn("[ServiceConsumer]-[findServiceAddr]-无法获取服务{}",
+                rpcRegistryResponse.getMsg());
+            throw new RpcException(RpcErrorEnum.SERVICE_NOT_FOUND, "未能获取服务名为" + serviceName + "的服务");
         }
         Object o = rpcRegistryResponse.getInfo().get(RpcRegistryResponse.SOCKET_ADDR_MAP_KEY);
         if (o == null) {

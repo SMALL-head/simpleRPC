@@ -27,4 +27,14 @@ public class InMemoryServiceRegistryImpl implements ServiceRegistry {
     public SocketInfo getServiceAddr(String serviceName) {
         return registeredServiceMap.get(serviceName);
     }
+
+    @Override
+    public boolean offlineService(String serviceName) {
+        SocketInfo remove = registeredServiceMap.remove(serviceName);
+        if (remove == null) {
+            log.warn("[offlineService]-未查找到名为{}的服务", serviceName);
+            return false;
+        }
+        return true;
+    }
 }
