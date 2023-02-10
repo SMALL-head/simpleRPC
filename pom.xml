@@ -11,8 +11,8 @@
     <modules>
         <module>rpc-common</module>
         <module>rpc-core</module>
-        <module>rpc-registry-center</module>
-        <module>rpc-service</module>
+        <module>test-rpc-registry-center</module>
+        <module>test-rpc-service</module>
         <module>test-rpc-client</module>
         <module>test-rpc-service-api</module>
     </modules>

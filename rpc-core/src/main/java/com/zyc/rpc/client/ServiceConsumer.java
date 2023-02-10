@@ -11,6 +11,8 @@ import com.zyc.enums.ProtocolTypeEnum;
 import com.zyc.enums.ResponseStatusEnum;
 import com.zyc.enums.RpcErrorEnum;
 import com.zyc.exception.RpcException;
+import com.zyc.rpc.cache.InMemorySocketCache;
+import com.zyc.rpc.cache.ServiceSocketCache;
 import com.zyc.rpc.client.netty.NettyRpcClient;
 import com.zyc.rpc.registry.config.RegistryConfig;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +41,13 @@ public class ServiceConsumer<T> {
      * 用来进行服务查找和rpc调用的客户端
      */
     RpcClient client;
+
+    boolean cacheEnable = true;
+
+    /**
+     * 服务注册中心返回信息的cache
+     */
+    ServiceSocketCache serviceSocketCache = InMemorySocketCache.getInstance();
 
     @SuppressWarnings("unchecked")
     public ServiceConsumer(Class<?> serviceInterface) throws InterruptedException {
@@ -83,8 +92,21 @@ public class ServiceConsumer<T> {
         this.serviceName = serviceName;
     }
 
-    public SocketInfo findServiceAddr() throws Exception {
-        return findServiceAddr(serviceName);
+    private SocketInfo findServiceAddr() throws Exception {
+        return findServiceAddr(serviceName, cacheEnable);
+    }
+
+    private SocketInfo findServiceAddr(String serviceName, boolean cacheEnable) throws Exception {
+        if (!cacheEnable) {
+            return findServiceAddr(serviceName);
+        }
+        SocketInfo socketInfo = serviceSocketCache.find(serviceName);
+        if (socketInfo != null) {
+            return socketInfo;
+        }
+        SocketInfo serviceAddr = findServiceAddr(serviceName);
+        serviceSocketCache.cache(serviceName, serviceAddr);
+        return serviceAddr;
     }
 
     private SocketInfo findServiceAddr(String serviceName) throws Exception {
@@ -123,5 +145,13 @@ public class ServiceConsumer<T> {
 
     public T getServiceProxy() {
         return serviceProxy;
+    }
+
+    public boolean isCacheEnable() {
+        return cacheEnable;
+    }
+
+    public void setCacheEnable(boolean cacheEnable) {
+        this.cacheEnable = cacheEnable;
     }
 }

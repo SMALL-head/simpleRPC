@@ -56,7 +56,9 @@ public class ServiceRegistryCenter {
                                             String service = data.getService();
                                             serviceRegistry.registry(service, data.getHost(), data.getPort());
                                             log.info("服务：{} - 注册成功", service);
-                                            RpcRegistryResponse resp = new RpcRegistryResponse(msgId, ResponseStatusEnum.SUCCESS_REGISTRY.getDesc(), null, ResponseStatusEnum.SUCCESS_REGISTRY);
+                                            Map<String, Object> info = new HashMap<>();
+                                            info.put("serviceName", service);
+                                            RpcRegistryResponse resp = new RpcRegistryResponse(msgId, ResponseStatusEnum.SUCCESS_REGISTRY.getDesc(), info, ResponseStatusEnum.SUCCESS_REGISTRY);
                                             channel.writeAndFlush(resp);
                                         }
                                         case GET_SERVICE -> {
@@ -83,7 +85,13 @@ public class ServiceRegistryCenter {
                                             log.debug("[ServiceRegistryCenter]-[handler]-收到下线请求，下线服务{}", service);
                                             boolean b = serviceRegistry.offlineService(service);
                                             RpcRegistryResponse resp = new RpcRegistryResponse(msgId, service + ResponseStatusEnum.SUCCESS_OFFLINE_SERVICE.getDesc(), null, ResponseStatusEnum.SUCCESS_OFFLINE_SERVICE);
-                                            channel.writeAndFlush(resp);
+
+                                            // 可能遭遇另一端channel下线的问题，因此尝试捕获Exception
+                                            try {
+                                                channel.writeAndFlush(resp);
+                                            } catch (Exception e){
+                                                ctx.fireChannelRead(msg);
+                                            }
                                         }
                                     }
                                 } else {

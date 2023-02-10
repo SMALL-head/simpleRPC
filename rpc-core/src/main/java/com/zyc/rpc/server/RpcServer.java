@@ -10,6 +10,7 @@ import com.zyc.entity.rpc.GenericReturn;
 import com.zyc.entity.rpc.RpcRequest;
 import com.zyc.enums.ProtocolTypeEnum;
 import com.zyc.enums.ResponseStatusEnum;
+import com.zyc.enums.RpcErrorEnum;
 import com.zyc.exception.RpcException;
 import com.zyc.netty.registry.ByteToRpcRegistryResponseDecoder;
 import com.zyc.netty.registry.RpcRegistryRequestToByteEncoder;
@@ -52,6 +53,11 @@ public class RpcServer {
     ChannelFuture registerCenterConnectFuture;
 
     public void startServer() throws Exception {
+        if (serviceProviderMap == null || serviceProviderMap.isEmpty()) {
+            log.error("[startServer]-未检测到服务");
+            throw new RpcException(RpcErrorEnum.NO_SERVICE_PROVIDED, "需要注册至少一个服务");
+        }
+
         parentEventLoop = new NioEventLoopGroupForShutdown();
         new ServerBootstrap()
             .channel(NioServerSocketChannel.class)
@@ -112,7 +118,7 @@ public class RpcServer {
                                     return;
                                 }
                                 if (ResponseStatusEnum.SUCCESS_REGISTRY.equals(response.getResponseStatus())) {
-                                    log.info("[RpcServer]-成功注册服务-{}", response.getMsg());
+                                    log.info("[RpcServer]-[handler]-成功注册服务-服务名{}", response.getInfo().get("serviceName"));
                                 }
                                 ctx.fireChannelRead(msg);
                             }
@@ -156,6 +162,13 @@ public class RpcServer {
             log.debug("[RpcServer]-[serviceOffline]-下线服务{}", serviceName);
             channel.writeAndFlush(offlineRequest);
         }
+    }
+
+    private void serviceOffline(String serviceName) {
+        Channel channel = registerCenterConnectFuture.channel();
+        RpcRegisterRequestData data = new RpcRegisterRequestData(host, port, serviceName);
+        RpcRegistryRequest offlineRequest = new RpcRegistryRequest(data, Constants.PROTOCOL_VERSION, ProtocolTypeEnum.OFFLINE_SERVICE);
+        channel.writeAndFlush(offlineRequest);
     }
 
     public void shutdown() {

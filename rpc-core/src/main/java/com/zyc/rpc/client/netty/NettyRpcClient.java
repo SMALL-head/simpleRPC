@@ -12,6 +12,8 @@ import com.zyc.netty.registry.ByteToRpcRegistryResponseDecoder;
 import com.zyc.netty.registry.RpcRegistryRequestToByteEncoder;
 import com.zyc.netty.rpc.ByteToGenericReturnDecoder;
 import com.zyc.netty.rpc.RpcRequestToByteEncoder;
+import com.zyc.rpc.cache.InMemorySocketCache;
+import com.zyc.rpc.cache.ServiceSocketCache;
 import com.zyc.rpc.client.RpcClient;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -44,8 +46,8 @@ public class NettyRpcClient implements RpcClient {
      */
     Bootstrap rpcCallBootstrap;
 
-    private ConcurrentHashMap<String, CompletableFuture<RpcRegistryResponse>> registryResponseMap = new ConcurrentHashMap<>();
-    private ConcurrentHashMap<String, CompletableFuture<GenericReturn>> rpcResponseMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, CompletableFuture<RpcRegistryResponse>> registryResponseMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, CompletableFuture<GenericReturn>> rpcResponseMap = new ConcurrentHashMap<>();
 
     public NettyRpcClient(String registryHost, int registryPort) throws InterruptedException {
         this.registryHost = registryHost;
@@ -67,7 +69,7 @@ public class NettyRpcClient implements RpcClient {
                         .addLast(new SimpleChannelInboundHandler<RpcRegistryResponse>() {
                             @Override
                             protected void channelRead0(ChannelHandlerContext ctx, RpcRegistryResponse msg) throws Exception {
-                                log.info("[NettyRpcClient]-[SimpleChannelInboundHandler]-收到来自注册中中心的消息-状态:{}", msg.getResponseStatus());
+                                log.debug("[NettyRpcClient]-[SimpleChannelInboundHandler]-收到来自注册中中心的消息-状态:{}", msg.getResponseStatus());
                                 String msgID = msg.getMsgID();
                                 CompletableFuture<RpcRegistryResponse> responseFuture = registryResponseMap.remove(msgID);
                                 if (responseFuture == null) {
@@ -76,7 +78,7 @@ public class NettyRpcClient implements RpcClient {
                                     return;
                                 }
                                 responseFuture.complete(msg);
-                                log.info("[SimpleChannelInboundHandler]-[channelRead0]-向msgID为{}的future写入结果", msgID);
+                                log.debug("[SimpleChannelInboundHandler]-[channelRead0]-向msgID为{}的future写入结果", msgID);
                                 ctx.fireChannelRead(msg);
                             }
                         });
@@ -131,7 +133,7 @@ public class NettyRpcClient implements RpcClient {
             data.setPort(socketAddress.getPort());
             channel.writeAndFlush(request);
 
-            log.info("[NettyRpcClient]-[sendRegistryRequest]-向注册中心发送请求-TYPE={}-msgID={}", request.getType(), request.getMsgID());
+            log.debug("[NettyRpcClient]-[sendRegistryRequest]-向注册中心发送请求-TYPE={}-msgID={}", request.getType(), request.getMsgID());
             registryResponseMap.put(request.getMsgID(), registryResponseFuture);
             log.debug("[NettyPrcClient]-[sendRegistryRequest]-向ChanelMap中注册future,id={}", request.getMsgID());
         } catch (Exception e) {
@@ -164,7 +166,6 @@ public class NettyRpcClient implements RpcClient {
         ChannelFuture connect = rpcCallBootstrap.connect(serviceHost, servicePort);
         // 别忘了阻塞！！要等连接建立后才执行后续的操作
         connect.sync();
-
         return connect.channel();
     }
 }

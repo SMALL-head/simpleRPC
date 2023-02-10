@@ -12,15 +12,19 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class RpcServerVersion1 {
     public static void main(String[] args) throws Exception {
-        // 配置服务提供方的服务器
+        // 1. 配置服务提供方的服务器
         RpcServer rpcServer = new RpcServer("127.0.0.1", 8080);
-        // 配置全局注册中心的信息
+        // 2. 配置全局注册中心的信息
         RegistryConfig.setSocketInfo(new SocketInfo(Constants.LOCALHOST, 8088));
-        // 创建一个服务
-        MyService myService = new MyServiceImpl();
-        ServiceProvider<MyService> provider1 = new ServiceProvider<>(myService, "service");
+        // 3. 创建两个服务
+        MyService myService1 = new MyServiceImpl();
+        MyService myService2 = new MyServiceImpl();
+        ServiceProvider<MyService> provider1 = new ServiceProvider<>(myService1, "service1");
+        ServiceProvider<MyService> provider2 = new ServiceProvider<>(myService2, "service2");
         rpcServer.addService(provider1);
-        // 启动服务器
+        rpcServer.addService(provider2);
+
+        // 4. 启动服务器，启动后将会自动把这两个服务注册到注册中心
         rpcServer.startServer();
     }
 }

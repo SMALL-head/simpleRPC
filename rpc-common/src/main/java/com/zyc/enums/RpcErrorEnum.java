@@ -8,7 +8,8 @@ public enum RpcErrorEnum {
     INVOKE_TIMEOUT("服务调用超时"),
     PRC_INVOKE_ERROR("调用过程出错"),
     NO_METHOD_MATCH("无匹配方法"),
-    NOT_A_INTERFACE("非接口类型被传入");
+    NOT_A_INTERFACE("非接口类型被传入"),
+    NO_SERVICE_PROVIDED("未提供任何服务");
 
     final private String errorMsg;
 
