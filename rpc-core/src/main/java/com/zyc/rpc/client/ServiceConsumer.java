@@ -10,6 +10,7 @@ import com.zyc.entity.rpc.RpcRequest;
 import com.zyc.enums.ProtocolTypeEnum;
 import com.zyc.enums.ResponseStatusEnum;
 import com.zyc.enums.RpcErrorEnum;
+import com.zyc.exception.RpcConnectionException;
 import com.zyc.exception.RpcException;
 import com.zyc.rpc.cache.InMemorySocketCache;
 import com.zyc.rpc.cache.ServiceSocketCache;
@@ -63,8 +64,14 @@ public class ServiceConsumer<T> {
 
                 // 3. 封装rpc调用参数，并发送
                 RpcRequest request = new RpcRequest(serviceName, method.getName(), args, classTypes);
-                CompletableFuture<GenericReturn> genericReturnCompletableFuture = client.sendRpcRequest(request, new SocketInfo(serviceAddr.getHost(), serviceAddr.getPort()));
-                log.info("[ServiceConsumer]-[proxy]-发送rpc请求-msgID={}-serviceName={}-serviceMethod={}", request.getMsgID(), request.getServiceName(), request.getServiceMethod());
+                CompletableFuture<GenericReturn> genericReturnCompletableFuture;
+                try {
+                    genericReturnCompletableFuture = client.sendRpcRequest(request, new SocketInfo(serviceAddr.getHost(), serviceAddr.getPort()));
+                } catch (RpcConnectionException rpcConnectionException) {
+                    serviceAddr = findServiceAddr(serviceName, false);
+                    genericReturnCompletableFuture = client.sendRpcRequest(request, new SocketInfo(serviceAddr.getHost(), serviceAddr.getPort()));
+                }
+                log.debug("[ServiceConsumer]-[proxy]-发送rpc请求-msgID={}-serviceName={}-serviceMethod={}", request.getMsgID(), request.getServiceName(), request.getServiceMethod());
 
                 // 4.同步阻塞得到结果
                 GenericReturn genericReturn = null;
@@ -98,7 +105,9 @@ public class ServiceConsumer<T> {
 
     private SocketInfo findServiceAddr(String serviceName, boolean cacheEnable) throws Exception {
         if (!cacheEnable) {
-            return findServiceAddr(serviceName);
+            SocketInfo serviceAddr = findServiceAddr(serviceName); // 此处如果美照都服务会抛出异常，就不会进行缓存了
+            serviceSocketCache.cache(serviceName, serviceAddr);
+            return serviceAddr;
         }
         SocketInfo socketInfo = serviceSocketCache.find(serviceName);
         if (socketInfo != null) {
@@ -111,7 +120,9 @@ public class ServiceConsumer<T> {
 
     private SocketInfo findServiceAddr(String serviceName) throws Exception {
         // 1. 封装并发送
-        RpcRegisterRequestData data = new RpcRegisterRequestData(null, 0, serviceName);
+        SocketInfo socketInfo = client.getSocketInfo();
+        log.debug("[findServiceAddr]-获取到消费者的socket信息,host: {}, port: {}", socketInfo.getHost(), socketInfo.getPort());
+        RpcRegisterRequestData data = new RpcRegisterRequestData(socketInfo.getHost(), socketInfo.getPort(), serviceName);
         RpcRegistryRequest request = new RpcRegistryRequest(data, Constants.PROTOCOL_VERSION, ProtocolTypeEnum.GET_SERVICE);
         CompletableFuture<RpcRegistryResponse> future = client.sendRegistryRequest(request);
 
@@ -126,7 +137,7 @@ public class ServiceConsumer<T> {
             throw new RpcException(RpcErrorEnum.INVOKE_TIMEOUT, "响应超时");
         }
         if (rpcRegistryResponse.getResponseStatus() == ResponseStatusEnum.FAIL_GET_SERVICE) {
-            log.warn("[ServiceConsumer]-[findServiceAddr]-无法获取服务{}",
+            log.error("[ServiceConsumer]-[findServiceAddr]-无法获取服务:{}",
                 rpcRegistryResponse.getMsg());
             throw new RpcException(RpcErrorEnum.SERVICE_NOT_FOUND, "未能获取服务名为" + serviceName + "的服务");
         }

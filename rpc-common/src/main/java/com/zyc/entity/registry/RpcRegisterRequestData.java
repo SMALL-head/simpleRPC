@@ -5,6 +5,9 @@ import io.netty.util.internal.StringUtil;
 import java.io.Serializable;
 import java.util.Arrays;
 
+/**
+ * host和port为发送者的
+ */
 public class RpcRegisterRequestData implements Serializable {
     private String host;
     private int port;

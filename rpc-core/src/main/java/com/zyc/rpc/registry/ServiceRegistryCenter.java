@@ -73,6 +73,9 @@ public class ServiceRegistryCenter {
                                             if (serviceAddr != null) {
                                                 info.put(RpcRegistryResponse.SOCKET_ADDR_MAP_KEY, serviceAddr);
                                                 respMsg = "成功获取地址" + service;
+
+                                                // 记录消费者及其对应的服务，当服务下线的时候需要向消费者发送cache清除的消息
+
                                             } else {
                                                 respMsg = "未能获取到名为" + service + "的服务";
                                             }

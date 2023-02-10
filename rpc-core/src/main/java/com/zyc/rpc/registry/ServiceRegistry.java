@@ -19,5 +19,5 @@ public interface ServiceRegistry {
      */
     SocketInfo getServiceAddr(String serviceName);
 
-    boolean offlineService(String serviveName);
+    boolean offlineService(String serviceName);
 }

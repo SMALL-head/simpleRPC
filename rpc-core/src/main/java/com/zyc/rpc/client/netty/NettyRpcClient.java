@@ -7,6 +7,7 @@ import com.zyc.entity.registry.SocketInfo;
 import com.zyc.entity.rpc.GenericReturn;
 import com.zyc.entity.rpc.RpcRequest;
 import com.zyc.enums.RpcErrorEnum;
+import com.zyc.exception.RpcConnectionException;
 import com.zyc.exception.RpcException;
 import com.zyc.netty.registry.ByteToRpcRegistryResponseDecoder;
 import com.zyc.netty.registry.RpcRegistryRequestToByteEncoder;
@@ -146,10 +147,13 @@ public class NettyRpcClient implements RpcClient {
     @Override
     public CompletableFuture<GenericReturn> sendRpcRequest(RpcRequest request, SocketInfo serviceProviderSocketInfo) {
         Channel rpcCallChannel = null;
+        String host = serviceProviderSocketInfo.getHost();
+        int port = serviceProviderSocketInfo.getPort();
         try {
-            rpcCallChannel = getRpcCallChannel(serviceProviderSocketInfo.getHost(), serviceProviderSocketInfo.getPort());
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            rpcCallChannel = getRpcCallChannel(host, port);
+        } catch (Exception e) {
+            log.error("[sendRpcRequest]-未能连接到服务提供方, host: {}, port: {}", host, port);
+            throw new RpcConnectionException("连接远程服务失败", host, port);
         }
         try {
             rpcCallChannel.writeAndFlush(request);
@@ -160,6 +164,12 @@ public class NettyRpcClient implements RpcClient {
         CompletableFuture<GenericReturn> future = new CompletableFuture<>();
         rpcResponseMap.put(request.getMsgID(), future);
         return future;
+    }
+
+    @Override
+    public SocketInfo getSocketInfo() {
+        InetSocketAddress inetSocketAddress = (InetSocketAddress) registryCenterConnect.channel().localAddress();
+        return new SocketInfo(inetSocketAddress.getHostString(), inetSocketAddress.getPort());
     }
 
     private Channel getRpcCallChannel(String serviceHost, int servicePort) throws InterruptedException {

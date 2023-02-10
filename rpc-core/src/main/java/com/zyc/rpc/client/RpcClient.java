@@ -13,4 +13,6 @@ public interface RpcClient {
     CompletableFuture<RpcRegistryResponse> sendRegistryRequest(RpcRegistryRequest request);
 
     CompletableFuture<GenericReturn> sendRpcRequest(RpcRequest request, SocketInfo serviceProviderSocketInfo);
+
+    SocketInfo getSocketInfo();
 }

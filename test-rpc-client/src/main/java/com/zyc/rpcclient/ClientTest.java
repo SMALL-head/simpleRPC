@@ -9,6 +9,7 @@ import com.zyc.service.MyServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class ClientTest {
@@ -24,6 +25,7 @@ public class ClientTest {
 
         // 调用远程服务
         int add1 = serviceProxy.add(1, 2);
+        TimeUnit.SECONDS.sleep(10);
         int add2 = serviceProxy.add(3,4);
         log.info("[rpc调用结果]-add1={}, add2={}", add1, add2);
 
