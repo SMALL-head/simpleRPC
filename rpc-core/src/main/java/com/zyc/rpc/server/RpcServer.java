@@ -171,7 +171,11 @@ public class RpcServer {
                 serviceName = o.getClass().getCanonicalName();
             }
             ServiceProvider serviceProvider = new ServiceProvider(o, serviceName);
-            serviceProviderMap.put(serviceName, serviceProvider);
+            ServiceProvider<?> origin = serviceProviderMap.putIfAbsent(serviceName, serviceProvider);
+            if (origin != null) {
+                log.error("[scanServices]-检测到相同名字的serviceProvider，重复名字为{}", serviceName);
+                throw new RpcException(RpcErrorEnum.DUPLICATED_SERVICE_NAME, "");
+            }
         }
     }
 

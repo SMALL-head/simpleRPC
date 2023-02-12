@@ -74,4 +74,31 @@ public static void main(String[] args) throws InterruptedException {
 ### 功能
 1. 客户端支持本地cache --- 已完成
 2. 服务提供方与注册中心的增加心跳检查，若注册中心检测到服务方下线了，那么注销服务
-3. 完成部分基于注解的开发
+3. 完成部分基于注解的开发 --- 已完成，服务端可以使用注解配置
+
+注解的使用方法如下，可以看到与之前相比大幅度减少代码量：
+```java
+// 1. 启动类上使用注解指定服务扫描包
+@ServiceScan(scan = "com.zyc.service")
+public class RpcServerVersion1 {
+    public static void main(String[] args) throws Exception {
+        // 2. 配置服务提供方的服务器
+        RpcServer rpcServer = new RpcServer("127.0.0.1", 8080);
+        // 3. 配置全局注册中心的信息
+        RegistryConfig.setSocketInfo(new SocketInfo(Constants.LOCALHOST, 8088));
+        // 4. 启动服务器，启动后将会自动把这com.zyc.service包下的所有带有@ServiceReference注解的类生成执行代理，并注册到注册中心
+        rpcServer.startServer(RpcServerVersion1.class);
+    }
+}
+```
+然后在上述指定的路径中定义提供服务的类就行
+```java
+@ServiceReference("abc")
+public class MyServiceImpl implements MyService{
+    @Override
+    public int add(int a, int b) {
+        System.out.println("abc被调用了");
+        return a+b;
+    }
+}
+```

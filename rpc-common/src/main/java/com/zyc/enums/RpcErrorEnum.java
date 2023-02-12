@@ -9,7 +9,8 @@ public enum RpcErrorEnum {
     PRC_INVOKE_ERROR("调用过程出错"),
     NO_METHOD_MATCH("无匹配方法"),
     NOT_A_INTERFACE("非接口类型被传入"),
-    NO_SERVICE_PROVIDED("未提供任何服务");
+    NO_SERVICE_PROVIDED("未提供任何服务"),
+    DUPLICATED_SERVICE_NAME("重复的服务名");
 
     final private String errorMsg;
 
