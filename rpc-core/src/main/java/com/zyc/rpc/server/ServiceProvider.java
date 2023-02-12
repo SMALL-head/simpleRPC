@@ -76,7 +76,7 @@ public class ServiceProvider<T> {
         try {
             retValue = method.invoke(service, params);
         } catch (Exception e) {
-            throw new RpcException(RpcErrorEnum.PRC_INVOKE_ERROR, "无法调用方法");
+            throw new RpcException(RpcErrorEnum.PRC_INVOKE_ERROR, "无法调用方法:" + e);
         }
 //        for (Method m : service.getClass().getMethods()) {
 //            log.info("[ServiceProvider]-[callService]-方法{}匹配中-参数类型{}", m.getName(), m.getParameterTypes());

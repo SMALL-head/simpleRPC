@@ -18,15 +18,16 @@ public class ClientTest {
         RegistryConfig.setSocketInfo(new SocketInfo(Constants.LOCALHOST, 8088));
 
         // 声明消费者，并指明对应的服务提供方的名字
+        ServiceConsumer<MyService> consumerWithAnnotation = new ServiceConsumer<>(MyService.class, "abc");
         ServiceConsumer<MyService> consumer = new ServiceConsumer<>(MyService.class, "service1");
-
         // 获取执行代理
-        MyService serviceProxy = consumer.getServiceProxy();
+        MyService serviceProxy1 = consumerWithAnnotation.getServiceProxy();
+        MyService serviceProxy2 = consumer.getServiceProxy();
 
         // 调用远程服务
-        int add1 = serviceProxy.add(1, 2);
-        TimeUnit.SECONDS.sleep(10);
-        int add2 = serviceProxy.add(3,4);
+        int add1 = serviceProxy1.add(1, 2);
+        int add2 = serviceProxy2.add(2,3);
+//        TimeUnit.SECONDS.sleep(10);
         log.info("[rpc调用结果]-add1={}, add2={}", add1, add2);
 
     }

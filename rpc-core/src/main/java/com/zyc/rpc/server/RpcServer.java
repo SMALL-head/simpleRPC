@@ -1,6 +1,8 @@
 package com.zyc.rpc.server;
 
 import ch.qos.logback.core.hook.ShutdownHook;
+import com.zyc.annotations.ServiceReference;
+import com.zyc.annotations.ServiceScan;
 import com.zyc.constants.Constants;
 import com.zyc.entity.registry.RpcRegisterRequestData;
 import com.zyc.entity.registry.RpcRegistryRequest;
@@ -17,6 +19,7 @@ import com.zyc.netty.registry.RpcRegistryRequestToByteEncoder;
 import com.zyc.netty.rpc.ByteToRpcRequestDecoder;
 import com.zyc.netty.rpc.GenericReturnToByteEncoder;
 import com.zyc.rpc.registry.config.RegistryConfig;
+import com.zyc.utils.ClassUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
@@ -26,9 +29,14 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.util.concurrent.Future;
+import io.netty.util.internal.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
@@ -52,12 +60,13 @@ public class RpcServer {
 
     ChannelFuture registerCenterConnectFuture;
 
-    public void startServer() throws Exception {
+    public void startServer(Class<?> bootClass) throws Exception {
         if (serviceProviderMap == null || serviceProviderMap.isEmpty()) {
             log.error("[startServer]-未检测到服务");
             throw new RpcException(RpcErrorEnum.NO_SERVICE_PROVIDED, "需要注册至少一个服务");
         }
 
+        scanServices(bootClass);
         parentEventLoop = new NioEventLoopGroupForShutdown();
         new ServerBootstrap()
             .channel(NioServerSocketChannel.class)
@@ -135,6 +144,35 @@ public class RpcServer {
             log.info("关闭进程");
             shutdown();
         }));
+    }
+
+    /**
+     * 扫描指定包下所有带有ServiceReference注解的类，将其注册进入serviceProviderMap中
+     */
+    private void scanServices(Class<?> bootClass) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+
+        String packageName = bootClass.getPackageName();
+        ServiceScan annotation = bootClass.getAnnotation(ServiceScan.class);
+        if (annotation != null) {
+            packageName = annotation.scan();
+        }
+        log.info("[scanServices]-扫描包{}下的类", packageName);
+
+        // 尝试获取packageName下的注解类
+        Set<Class<?>> classesWithAnnotation = ClassUtil.getClassesWithAnnotation(packageName, ServiceReference.class);
+        log.info("[scanServices]-扫描完成，共有{}个满足条件的类", classesWithAnnotation.size());
+        for (Class<?> classWithAnnotation : classesWithAnnotation) {
+            log.info("[scanService]-第一个类{}", classWithAnnotation.getCanonicalName());
+            // 暂时仅默认构造函数构造方法
+            Constructor<?> defaultConstructor = classWithAnnotation.getConstructor();
+            Object o = defaultConstructor.newInstance();
+            String serviceName = classWithAnnotation.getAnnotation(ServiceReference.class).value();
+            if (StringUtil.isNullOrEmpty(serviceName)) {
+                serviceName = o.getClass().getCanonicalName();
+            }
+            ServiceProvider serviceProvider = new ServiceProvider(o, serviceName);
+            serviceProviderMap.put(serviceName, serviceProvider);
+        }
     }
 
     private void sendRegistryRequest(Channel channel) {

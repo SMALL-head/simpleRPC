@@ -1,5 +1,6 @@
 package com.zyc.service_server;
 
+import com.zyc.annotations.ServiceScan;
 import com.zyc.constants.Constants;
 import com.zyc.entity.registry.SocketInfo;
 import com.zyc.rpc.registry.config.RegistryConfig;
@@ -8,8 +9,7 @@ import com.zyc.rpc.server.ServiceProvider;
 import com.zyc.service.MyService;
 import com.zyc.service.MyServiceImpl;
 
-import java.util.concurrent.ConcurrentHashMap;
-
+@ServiceScan(scan = "com.zyc.service")
 public class RpcServerVersion1 {
     public static void main(String[] args) throws Exception {
         // 1. 配置服务提供方的服务器
@@ -25,6 +25,6 @@ public class RpcServerVersion1 {
         rpcServer.addService(provider2);
 
         // 4. 启动服务器，启动后将会自动把这两个服务注册到注册中心
-        rpcServer.startServer();
+        rpcServer.startServer(RpcServerVersion1.class);
     }
 }

@@ -92,7 +92,7 @@ public class ServiceRegistryCenter {
                                             // 可能遭遇另一端channel下线的问题，因此尝试捕获Exception
                                             try {
                                                 channel.writeAndFlush(resp);
-                                            } catch (Exception e){
+                                            } catch (Throwable e){
                                                 ctx.fireChannelRead(msg);
                                             }
                                         }
