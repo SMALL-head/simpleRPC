@@ -6,7 +6,8 @@ public enum ProtocolTypeEnum {
     OFFLINE_SERVICE((byte) 0x3, "服务下线"),
     REGISTRY_RESPONSE((byte) 0x4, "注册中心响应"),
     RPC_CALL((byte) 0x5, "请求调用"),
-    RPC_RESPONSE((byte) 0x6, "调用响应");
+    RPC_RESPONSE((byte) 0x6, "调用响应"),
+    HEART_BEAT((byte) 0x7, "心跳包");
 
     final byte value;
     final String desc;

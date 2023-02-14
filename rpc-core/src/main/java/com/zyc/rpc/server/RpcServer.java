@@ -1,15 +1,9 @@
 package com.zyc.rpc.server;
 
-import ch.qos.logback.core.hook.ShutdownHook;
 import com.zyc.annotations.ServiceReference;
 import com.zyc.annotations.ServiceScan;
 import com.zyc.constants.Constants;
-import com.zyc.entity.registry.RpcRegisterRequestData;
-import com.zyc.entity.registry.RpcRegistryRequest;
-import com.zyc.entity.registry.RpcRegistryResponse;
-import com.zyc.entity.registry.SocketInfo;
-import com.zyc.entity.rpc.GenericReturn;
-import com.zyc.entity.rpc.RpcRequest;
+import com.zyc.entity.registry.*;
 import com.zyc.enums.ProtocolTypeEnum;
 import com.zyc.enums.ResponseStatusEnum;
 import com.zyc.enums.RpcErrorEnum;
@@ -19,6 +13,8 @@ import com.zyc.netty.registry.RpcRegistryRequestToByteEncoder;
 import com.zyc.netty.rpc.ByteToRpcRequestDecoder;
 import com.zyc.netty.rpc.GenericReturnToByteEncoder;
 import com.zyc.rpc.registry.config.RegistryConfig;
+import com.zyc.rpc.server.handler.ServiceCallHandler;
+import com.zyc.rpc.server.handler.encoder.HeartBeatDataToByteEncoder;
 import com.zyc.utils.ClassUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
@@ -26,27 +22,30 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.string.StringDecoder;
-import io.netty.handler.codec.string.StringEncoder;
 import io.netty.util.concurrent.Future;
 import io.netty.util.internal.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class RpcServer {
+    final static int heartBeatSendInterval = 10;
     Map<String, ServiceProvider<?>> serviceProviderMap;
-
     String host;
     int port;
 
     NioEventLoopGroupForShutdown parentEventLoop;
+
+    public void offlineService(String service1) {
+        serviceOffline(service1);
+    }
 
     class NioEventLoopGroupForShutdown extends NioEventLoopGroup {
         @Override
@@ -77,34 +76,7 @@ public class RpcServer {
                     ch.pipeline()
                         .addLast(new ByteToRpcRequestDecoder())
                         .addLast(new GenericReturnToByteEncoder())
-                        .addLast(new ChannelInboundHandlerAdapter() {
-                            @Override
-                            public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-                                log.info("[RpcServer]-[startServer]-接收到msg，类型为-{}", msg.getClass());
-                                if (!(msg instanceof RpcRequest request)) {
-                                    return;
-                                }
-
-                                String serviceName = request.getServiceName();
-                                ServiceProvider<?> serviceProvider = serviceProviderMap.get(serviceName);
-                                if (serviceProvider == null) {
-                                    log.warn("未寻找到服务{}", serviceName);
-                                    ctx.fireChannelRead(msg);
-                                    return;
-                                }
-                                GenericReturn genericReturn;
-                                try {
-
-                                    genericReturn = serviceProvider.callService(request);
-                                } catch (Exception e) {
-                                    ctx.fireChannelRead(msg);
-                                    throw e;
-                                }
-                                log.info("成功调用服务{}", serviceName);
-                                ch.writeAndFlush(genericReturn);
-                                ctx.fireChannelRead(msg);
-                            }
-                        });
+                        .addLast(new ServiceCallHandler(serviceProviderMap, ch));
                 }
             })
             .bind(port);
@@ -119,7 +91,8 @@ public class RpcServer {
                     ChannelPipeline pipeline = ch.pipeline();
                     pipeline.addLast(new RpcRegistryRequestToByteEncoder())
                         .addLast(new ByteToRpcRegistryResponseDecoder())
-                        .addLast(new ChannelInboundHandlerAdapter() {
+                        .addLast(new HeartBeatDataToByteEncoder())
+                        .addLast("msgFromRegistryHandler", new ChannelInboundHandlerAdapter() {
                             @Override
                             public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
                                 if (!(msg instanceof RpcRegistryResponse response)) {
@@ -137,13 +110,30 @@ public class RpcServer {
             .connect(RegistryConfig.getHost(), RegistryConfig.getPort());
         registerCenterConnectFuture.sync();
         Channel channel = registerCenterConnectFuture.channel();
+
+        // 发送注册信息
         sendRegistryRequest(channel);
+
+        // 保持channel的连接状态，进行心跳包的发送
+        sendHeartBeatMsgToRegistryCenter(channel);
 
         // 注册jvm退出的hook函数
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             log.info("关闭进程");
             shutdown();
         }));
+    }
+
+    private void sendHeartBeatMsgToRegistryCenter(Channel channel) {
+        // 指定间隔后发送一次心跳包，定时任务调度
+        // 不是很大的花销，因此核心线程数给到1就好
+        Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
+            log.info("[sendHeartBeatMsgToRegistryCenter]-正在发送server中所有存活服务的心跳包");
+            for (String serviceName : serviceProviderMap.keySet()) {
+                channel.writeAndFlush(new HeartBeatData(serviceName));
+            }
+            log.info("[sendHeartBeatMsgToRegistryCenter]-成功发送所有心跳包");
+        }, 6/*等待所有服务启动后再进行发送*/, heartBeatSendInterval, TimeUnit.SECONDS);
     }
 
     /**
@@ -204,9 +194,11 @@ public class RpcServer {
             log.debug("[RpcServer]-[serviceOffline]-下线服务{}", serviceName);
             channel.writeAndFlush(offlineRequest);
         }
+        serviceProviderMap.clear();
     }
 
     private void serviceOffline(String serviceName) {
+        serviceProviderMap.remove(serviceName);
         Channel channel = registerCenterConnectFuture.channel();
         RpcRegisterRequestData data = new RpcRegisterRequestData(host, port, serviceName);
         RpcRegistryRequest offlineRequest = new RpcRegistryRequest(data, Constants.PROTOCOL_VERSION, ProtocolTypeEnum.OFFLINE_SERVICE);

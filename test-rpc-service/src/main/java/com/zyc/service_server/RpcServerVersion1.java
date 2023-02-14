@@ -9,6 +9,9 @@ import com.zyc.rpc.server.ServiceProvider;
 import com.zyc.service.MyService;
 import com.zyc.service.MyServiceImpl;
 
+import java.sql.Time;
+import java.util.concurrent.TimeUnit;
+
 @ServiceScan(scan = "com.zyc.service")
 public class RpcServerVersion1 {
     public static void main(String[] args) throws Exception {

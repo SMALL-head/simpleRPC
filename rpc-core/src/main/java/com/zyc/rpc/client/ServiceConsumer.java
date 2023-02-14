@@ -55,7 +55,7 @@ public class ServiceConsumer<T> {
         this.serviceProxy = (T) Proxy.newProxyInstance(serviceInterface.getClassLoader(), new Class<?>[]{serviceInterface}, new InvocationHandler() {
             @Override
             public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                // 1. 寻找服务提供者的位置 todo:后期可以加入缓存机制
+                // 1. 寻找服务提供者的位置
                 SocketInfo serviceAddr = findServiceAddr();
                 log.info("[ServiceConsumer]-[proxy]-获取到服务的socket-host={}, port={}", serviceAddr.getHost(), serviceAddr.getPort());
 

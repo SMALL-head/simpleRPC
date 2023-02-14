@@ -1,5 +1,6 @@
 package com.zyc.rpc.registry;
 
+import com.zyc.entity.registry.ServiceInfo;
 import com.zyc.entity.registry.SocketInfo;
 
 /**
@@ -20,4 +21,8 @@ public interface ServiceRegistry {
     SocketInfo getServiceAddr(String serviceName);
 
     boolean offlineService(String serviceName);
+
+    boolean updateLastUpdate(String serviceName);
+
+    void removeDeadService();
 }

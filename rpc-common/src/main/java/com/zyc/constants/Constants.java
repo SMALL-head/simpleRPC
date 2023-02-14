@@ -20,4 +20,6 @@ public class Constants {
      * 注册中心通信协议魔数
      */
     public static final int MAGIC_NUMBER = 0x123;
+
+    public static final int REGISTRY_CHECK_INTERVAL = 20;
 }

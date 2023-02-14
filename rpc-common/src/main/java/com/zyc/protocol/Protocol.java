@@ -1,6 +1,7 @@
 package com.zyc.protocol;
 
 import com.zyc.constants.Constants;
+import com.zyc.entity.registry.HeartBeatData;
 import com.zyc.entity.registry.RpcRegisterRequestData;
 import com.zyc.entity.registry.RpcRegistryRequest;
 import com.zyc.entity.registry.RpcRegistryResponse;
@@ -68,9 +69,16 @@ public class Protocol {
 
         RpcRegistryRequest data = (RpcRegistryRequest) deserialize;
 
-         return data;
+        return data;
     }
 
+    /**
+     * 生成协议的首部信息
+     * @param res 最终生成的协议的byte数组
+     * @param dataLength 仅数据长度，不包含首部长度
+     * @param type 类型
+     * @throws ProtocolException 协议产生过程中的可能出现的错误
+     */
     private static void generateProtocolHead(byte[] res, int dataLength, ProtocolTypeEnum type) throws ProtocolException {
         System.arraycopy(ByteUtils.int2byteArray(Constants.MAGIC_NUMBER), 0, res, 0, 4);
         System.arraycopy(new byte[]{type.getByteValue()}, 0, res, 4, 1);
@@ -181,5 +189,34 @@ public class Protocol {
         byte[] serviceBytes = new byte[size];
         content.readBytes(serviceBytes);
         return (GenericReturn) Hessian2Utils.deserialize(serviceBytes);
+    }
+
+    public static byte[] generateHeartBeatDataProtocol(HeartBeatData data) throws Exception {
+        byte[] serialize = Hessian2Utils.serialize(data);
+        byte[] res = new byte[serialize.length + 8];
+        generateProtocolHead(res, serialize.length, ProtocolTypeEnum.HEART_BEAT);
+        System.arraycopy(serialize, 0, res, 8, serialize.length);
+        return res;
+    }
+
+    public static HeartBeatData parseHeartBeatDataProtocol(ByteBuf content) throws Exception {
+        //校验魔数
+        int magic = content.readInt();
+        if (magic != Constants.MAGIC_NUMBER) {
+            throw new ProtocolException(ProtocolErrorEnum.MAGIC_NUMBER_ERROR);
+        }
+        // 校验协议类型
+        byte b = content.readByte();
+        ProtocolTypeEnum protocolType = ProtocolTypeEnum.getEnumByValue(b);
+        if (!ProtocolTypeEnum.HEART_BEAT.equals(protocolType)) {
+            throw new ProtocolException(ProtocolErrorEnum.UNEXPECTED_PROTOCOL_TYPE);
+        }
+        // 跳过version
+        int version = content.readByte();
+        // 获取size后反序列化
+        short size = content.readShort();
+        byte[] serviceBytes = new byte[size];
+        content.readBytes(serviceBytes);
+        return (HeartBeatData) Hessian2Utils.deserialize(serviceBytes);
     }
 }
