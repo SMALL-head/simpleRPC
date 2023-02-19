@@ -20,9 +20,22 @@ public interface ServiceRegistry {
      */
     SocketInfo getServiceAddr(String serviceName);
 
+    /**
+     * 下线服务
+     * @param serviceName 服务名
+     * @return 成功下线，返回true；否则返回false
+     */
     boolean offlineService(String serviceName);
 
+    /**
+     * 接收到心跳包后更新服务存活时间
+     * @param serviceName 服务名
+     * @return 更新成功返回true，否则返回false
+     */
     boolean updateLastUpdate(String serviceName);
 
+    /**
+     * 由注册中心的定时任务定时执行的操作，其目的是为了删除不满足条件的任务
+     */
     void removeDeadService();
 }

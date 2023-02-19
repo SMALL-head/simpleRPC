@@ -37,6 +37,9 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class RpcServer {
     final static int heartBeatSendInterval = 10;
+    /**
+     * 索引层
+     */
     Map<String, ServiceProvider<?>> serviceProviderMap;
     String host;
     int port;
@@ -67,6 +70,8 @@ public class RpcServer {
 
         scanServices(bootClass);
         parentEventLoop = new NioEventLoopGroupForShutdown();
+
+        // 启动rpc调用相关的server
         new ServerBootstrap()
             .channel(NioServerSocketChannel.class)
             .group(parentEventLoop)
@@ -76,12 +81,13 @@ public class RpcServer {
                     ch.pipeline()
                         .addLast(new ByteToRpcRequestDecoder())
                         .addLast(new GenericReturnToByteEncoder())
-                        .addLast(new ServiceCallHandler(serviceProviderMap, ch));
+                        .addLast("RpcCallHandler", new ServiceCallHandler(serviceProviderMap, ch));
                 }
             })
             .bind(port);
         log.info("[RpcServer]-[startServer]-rpc服务提供方服务器注册host={}-port={}", host, port);
 
+        // 启动和注册中心相连的客户端
         registerCenterConnectFuture = new Bootstrap()
             .channel(NioSocketChannel.class)
             .group(new NioEventLoopGroup())
@@ -109,9 +115,10 @@ public class RpcServer {
             })
             .connect(RegistryConfig.getHost(), RegistryConfig.getPort());
         registerCenterConnectFuture.sync();
+        // 注：此处channel会一直带到心跳包的发送，因此不会被GC，长连接
         Channel channel = registerCenterConnectFuture.channel();
 
-        // 发送注册信息
+        // 发送所有serviceProvider的注册信息
         sendRegistryRequest(channel);
 
         // 保持channel的连接状态，进行心跳包的发送

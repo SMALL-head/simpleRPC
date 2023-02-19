@@ -5,7 +5,9 @@ import com.zyc.entity.registry.ServiceInfo;
 import com.zyc.entity.registry.SocketInfo;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
@@ -58,6 +60,7 @@ public class InMemoryServiceRegistryImpl implements ServiceRegistry {
         Calendar instance = Calendar.getInstance();
         instance.add(Calendar.SECOND, -1 * Constants.REGISTRY_CHECK_INTERVAL);
 
+        // 2. 超时未更新的服务算为死亡服务，删除
         for (String serviceName : registeredServiceMap.keySet()) {
             ServiceInfo service = registeredServiceMap.get(serviceName);
             if (service.getLastUpdate().compareTo(instance) < 0) {

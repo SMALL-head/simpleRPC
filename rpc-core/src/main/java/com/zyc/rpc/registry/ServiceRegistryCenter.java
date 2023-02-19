@@ -25,6 +25,9 @@ public class ServiceRegistryCenter {
     private int port;
     private NioEventLoopGroup workLoopGroup;
 
+    /**
+     * 定时任务：用于删除失效服务的
+     */
     private ScheduledExecutorService scheduledExecutorService;
 
     public void serverStart() {

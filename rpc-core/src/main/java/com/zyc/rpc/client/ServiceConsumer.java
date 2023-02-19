@@ -16,6 +16,7 @@ import com.zyc.rpc.cache.InMemorySocketCache;
 import com.zyc.rpc.cache.ServiceSocketCache;
 import com.zyc.rpc.client.netty.NettyRpcClient;
 import com.zyc.rpc.registry.config.RegistryConfig;
+import io.netty.util.internal.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.invoke.TypeDescriptor;
@@ -52,6 +53,9 @@ public class ServiceConsumer<T> {
 
     @SuppressWarnings("unchecked")
     public ServiceConsumer(Class<?> serviceInterface) throws InterruptedException {
+        if (!serviceInterface.isInterface()) {
+            throw new RpcException(RpcErrorEnum.NOT_A_INTERFACE, "需要一个接口类型");
+        }
         this.serviceProxy = (T) Proxy.newProxyInstance(serviceInterface.getClassLoader(), new Class<?>[]{serviceInterface}, new InvocationHandler() {
             @Override
             public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -87,16 +91,15 @@ public class ServiceConsumer<T> {
         });
 
         this.client = new NettyRpcClient(RegistryConfig.getHost(), RegistryConfig.getPort());
-        if (!serviceInterface.isInterface()) {
-            throw new RpcException(RpcErrorEnum.NOT_A_INTERFACE, "需要一个接口类型");
-        }
         this.serviceInterface = serviceInterface;
         this.serviceName = serviceInterface.getCanonicalName();
     }
 
     public ServiceConsumer(Class<?> serviceInterface, String serviceName) throws InterruptedException {
         this(serviceInterface);
-        this.serviceName = serviceName;
+        if (!StringUtil.isNullOrEmpty(serviceName)) {
+            this.serviceName = serviceName;
+        }
     }
 
     private SocketInfo findServiceAddr() throws Exception {
@@ -105,7 +108,7 @@ public class ServiceConsumer<T> {
 
     private SocketInfo findServiceAddr(String serviceName, boolean cacheEnable) throws Exception {
         if (!cacheEnable) {
-            SocketInfo serviceAddr = findServiceAddr(serviceName); // 此处如果美照都服务会抛出异常，就不会进行缓存了
+            SocketInfo serviceAddr = findServiceAddr(serviceName); // 此处如果没找到服务会抛出异常，就不会进行缓存了
             serviceSocketCache.cache(serviceName, serviceAddr);
             return serviceAddr;
         }
