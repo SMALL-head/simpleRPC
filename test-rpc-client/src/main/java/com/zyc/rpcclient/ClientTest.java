@@ -27,6 +27,10 @@ public class ClientTest {
         // 调用远程服务
         int add1 = serviceProxy1.add(1, 2);
         int add2 = serviceProxy2.add(2,3);
+        serviceProxy2.add(2,3);
+        serviceProxy2.add(2,3);
+        serviceProxy2.add(2,3);
+        serviceProxy2.add(2,3);
 //        TimeUnit.SECONDS.sleep(10);
         log.info("[rpc调用结果]-add1={}, add2={}", add1, add2);
 

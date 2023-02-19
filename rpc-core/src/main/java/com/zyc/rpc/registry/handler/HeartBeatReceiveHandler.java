@@ -12,8 +12,10 @@ public class HeartBeatReceiveHandler extends SimpleChannelInboundHandler<HeartBe
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, HeartBeatData msg) throws Exception {
         String serviceName = msg.getServiceName();
+        String host = msg.getHost();
+        int port = msg.getPort();
         log.info("[HeartBeatReceiveHandler]-接收到服务{}的心跳包，并进行更新", serviceName);
-        serviceRegistry.updateLastUpdate(serviceName);
+        serviceRegistry.updateLastUpdate(serviceName, host, port);
     }
 
     public HeartBeatReceiveHandler(ServiceRegistry serviceRegistry) {

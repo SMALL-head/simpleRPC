@@ -21,7 +21,6 @@ public class ServiceCallHandler extends ChannelInboundHandlerAdapter {
         }
 
         String serviceName = request.getServiceName();
-        // todo:增加负载均衡功能
         ServiceProvider<?> serviceProvider = serviceProviderMap.get(serviceName);
         if (serviceProvider == null) {
             log.warn("未寻找到服务{}", serviceName);

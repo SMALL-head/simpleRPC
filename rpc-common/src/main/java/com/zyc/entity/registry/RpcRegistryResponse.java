@@ -7,7 +7,10 @@ import java.util.Map;
 import java.util.UUID;
 
 public class RpcRegistryResponse implements Serializable {
-    public final static String SOCKET_ADDR_MAP_KEY = "SocketAddr";
+    /**
+     * 获取map中的键为该值的Set < ServiceInfo >类型
+     */
+    public final static String SOCKET_ADDR_MAP_KEY = "ServiceInfoSet";
     private String msgID;
     String msg;
 

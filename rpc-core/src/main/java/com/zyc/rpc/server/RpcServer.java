@@ -137,7 +137,8 @@ public class RpcServer {
         Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
             log.info("[sendHeartBeatMsgToRegistryCenter]-正在发送server中所有存活服务的心跳包");
             for (String serviceName : serviceProviderMap.keySet()) {
-                channel.writeAndFlush(new HeartBeatData(serviceName));
+                ServiceProvider<?> serviceProvider = serviceProviderMap.get(serviceName);
+                channel.writeAndFlush(new HeartBeatData(serviceName, getHost(), getPort()));
             }
             log.info("[sendHeartBeatMsgToRegistryCenter]-成功发送所有心跳包");
         }, 6/*等待所有服务启动后再进行发送*/, heartBeatSendInterval, TimeUnit.SECONDS);

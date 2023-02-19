@@ -1,7 +1,10 @@
 package com.zyc.rpc.cache;
 
+import com.zyc.entity.registry.ServiceInfo;
 import com.zyc.entity.registry.SocketInfo;
+import com.zyc.entity.registry.collections.ServiceInfoSet;
 
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -10,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @apiNote 使用getInstance获取单例
  */
 public class InMemorySocketCache implements ServiceSocketCache {
-    ConcurrentHashMap<String, SocketInfo> cache;
+    ConcurrentHashMap<String, ServiceInfoSet> cache;
 
     static final InMemorySocketCache singleton = new InMemorySocketCache();
 
@@ -26,15 +29,17 @@ public class InMemorySocketCache implements ServiceSocketCache {
     }
 
     @Override
-    public void cache(String key, SocketInfo value) {
+    public void cache(String key, ServiceInfoSet value) {
         cache.put(key, value);
     }
 
     @Override
-    public SocketInfo remove(String key) {
+    public ServiceInfoSet remove(String key) {
         return cache.remove(key);
-    }@Override
-    public SocketInfo find(String key) {
+    }
+
+    @Override
+    public ServiceInfoSet find(String key) {
         return cache.get(key);
     }
 

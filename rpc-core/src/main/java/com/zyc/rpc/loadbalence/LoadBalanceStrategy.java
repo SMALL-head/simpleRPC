@@ -1,7 +1,8 @@
 package com.zyc.rpc.loadbalence;
 
-import com.zyc.rpc.server.ServiceProvider;
+import com.zyc.entity.registry.ServiceInfo;
+import com.zyc.entity.registry.collections.ServiceInfoSet;
 
 public interface LoadBalanceStrategy {
-    ServiceProvider<?> select();
+    ServiceInfo select(ServiceInfoSet serviceInfoSet);
 }

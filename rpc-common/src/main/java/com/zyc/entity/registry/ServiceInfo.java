@@ -1,8 +1,10 @@
 package com.zyc.entity.registry;
 
+import java.io.Serializable;
 import java.util.Calendar;
+import java.util.Objects;
 
-public class ServiceInfo {
+public class ServiceInfo implements Serializable {
     SocketInfo socketInfo;
 
     Calendar lastUpdate;
@@ -29,5 +31,24 @@ public class ServiceInfo {
 
     public void setLastUpdate(Calendar lastUpdate) {
         this.lastUpdate = lastUpdate;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ServiceInfo that = (ServiceInfo) o;
+        return socketInfo.equals(that.socketInfo);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(socketInfo);
+    }
+
+    @Override
+    public String toString() {
+        return "ServiceInfo{" +
+            "socketInfo=" + socketInfo;
     }
 }

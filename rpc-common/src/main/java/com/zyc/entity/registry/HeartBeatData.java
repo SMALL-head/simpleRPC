@@ -8,11 +8,21 @@ import java.io.Serializable;
 public class HeartBeatData implements Serializable {
     String serviceName;
 
+    String host;
+
+    int port;
+
     public HeartBeatData() {
     }
 
-    public HeartBeatData(String serviceName) {
+//    public HeartBeatData(String serviceName) {
+//        this.serviceName = serviceName;
+//    }
+
+    public HeartBeatData(String serviceName, String host, int port) {
         this.serviceName = serviceName;
+        this.host = host;
+        this.port = port;
     }
 
     public String getServiceName() {
@@ -21,5 +31,21 @@ public class HeartBeatData implements Serializable {
 
     public void setServiceName(String serviceName) {
         this.serviceName = serviceName;
+    }
+
+    public String getHost() {
+        return host;
+    }
+
+    public void setHost(String host) {
+        this.host = host;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
     }
 }
