@@ -1,10 +1,8 @@
 package com.zyc.rpc.client;
 
 import com.zyc.constants.Constants;
-import com.zyc.entity.registry.RpcRegisterRequestData;
-import com.zyc.entity.registry.RpcRegistryRequest;
-import com.zyc.entity.registry.RpcRegistryResponse;
-import com.zyc.entity.registry.SocketInfo;
+import com.zyc.entity.registry.*;
+import com.zyc.entity.registry.collections.ServiceInfoSet;
 import com.zyc.entity.rpc.GenericReturn;
 import com.zyc.entity.rpc.RpcRequest;
 import com.zyc.enums.ProtocolTypeEnum;
@@ -15,6 +13,8 @@ import com.zyc.exception.RpcException;
 import com.zyc.rpc.cache.InMemorySocketCache;
 import com.zyc.rpc.cache.ServiceSocketCache;
 import com.zyc.rpc.client.netty.NettyRpcClient;
+import com.zyc.rpc.loadbalence.LoadBalancer;
+import com.zyc.rpc.registry.ServiceRegistry;
 import com.zyc.rpc.registry.config.RegistryConfig;
 import io.netty.util.internal.StringUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +23,8 @@ import java.lang.invoke.TypeDescriptor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -46,6 +48,8 @@ public class ServiceConsumer<T> {
 
     boolean cacheEnable = true;
 
+    LoadBalancer loadBalancer = new LoadBalancer();
+
     /**
      * 服务注册中心返回信息的cache
      */
@@ -59,21 +63,40 @@ public class ServiceConsumer<T> {
         this.serviceProxy = (T) Proxy.newProxyInstance(serviceInterface.getClassLoader(), new Class<?>[]{serviceInterface}, new InvocationHandler() {
             @Override
             public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                // 1. 寻找服务提供者的位置
-                SocketInfo serviceAddr = findServiceAddr();
-                log.info("[ServiceConsumer]-[proxy]-获取到服务的socket-host={}, port={}", serviceAddr.getHost(), serviceAddr.getPort());
+                // 1. 寻找服务提供者的位置，首先在cache里面寻找
+                ServiceInfoSet serviceAddrs= findServiceAddr();
+                if (serviceAddrs.isEmpty()) {
+                    log.warn("[ServiceConsumer]-[proxy]-服务{}的缓存列表为空，直接向注册中心请求", serviceName);
+                    serviceAddrs = findServiceAddr(serviceName, false);
+                }
+                if (serviceAddrs.isEmpty()) {
+                    log.warn("[ServiceConsumer]-[proxy]-服务{}注册中心请求结果仍然为空", serviceName);
+                    return null;
+                }
+                log.info("[ServiceConsumer]-[proxy]-获取到服务{}地址信息", serviceName);
 
                 // 2. 整理方法调用的参数
                 Class<?>[] classTypes = method.getParameterTypes();
 
                 // 3. 封装rpc调用参数，并发送
+                // todo: 增加负载均衡功能
                 RpcRequest request = new RpcRequest(serviceName, method.getName(), args, classTypes);
                 CompletableFuture<GenericReturn> genericReturnCompletableFuture;
+                // 3.1 装载备选项
+                loadBalancer.setServiceInfoSet(serviceAddrs);
+                // 3.2 触发负载均衡选择
+                ServiceInfo serviceAddr = loadBalancer.select();
+                SocketInfo socketInfo = serviceAddr.getSocketInfo();
                 try {
-                    genericReturnCompletableFuture = client.sendRpcRequest(request, new SocketInfo(serviceAddr.getHost(), serviceAddr.getPort()));
+                    genericReturnCompletableFuture = client.sendRpcRequest(request, new SocketInfo(socketInfo.getHost(), socketInfo.getPort()));
                 } catch (RpcConnectionException rpcConnectionException) {
-                    serviceAddr = findServiceAddr(serviceName, false);
-                    genericReturnCompletableFuture = client.sendRpcRequest(request, new SocketInfo(serviceAddr.getHost(), serviceAddr.getPort()));
+                    serviceAddrs = findServiceAddr(serviceName, false);
+                    // 3.1 装载备选项
+                    loadBalancer.setServiceInfoSet(serviceAddrs);
+                    // 3.2 触发负载均衡选择
+                    serviceAddr = loadBalancer.select();
+                    socketInfo = serviceAddr.getSocketInfo();
+                    genericReturnCompletableFuture = client.sendRpcRequest(request, new SocketInfo(socketInfo.getHost(), socketInfo.getPort()));
                 }
                 log.debug("[ServiceConsumer]-[proxy]-发送rpc请求-msgID={}-serviceName={}-serviceMethod={}", request.getMsgID(), request.getServiceName(), request.getServiceMethod());
 
@@ -102,26 +125,26 @@ public class ServiceConsumer<T> {
         }
     }
 
-    private SocketInfo findServiceAddr() throws Exception {
+    private ServiceInfoSet findServiceAddr() throws Exception {
         return findServiceAddr(serviceName, cacheEnable);
     }
 
-    private SocketInfo findServiceAddr(String serviceName, boolean cacheEnable) throws Exception {
+    private ServiceInfoSet findServiceAddr(String serviceName, boolean cacheEnable) throws Exception {
         if (!cacheEnable) {
-            SocketInfo serviceAddr = findServiceAddr(serviceName); // 此处如果没找到服务会抛出异常，就不会进行缓存了
+            ServiceInfoSet serviceAddr = findServiceAddr(serviceName); // 此处如果没找到服务会抛出异常，就不会进行缓存了
             serviceSocketCache.cache(serviceName, serviceAddr);
             return serviceAddr;
         }
-        SocketInfo socketInfo = serviceSocketCache.find(serviceName);
+        ServiceInfoSet socketInfo = serviceSocketCache.find(serviceName);
         if (socketInfo != null) {
             return socketInfo;
         }
-        SocketInfo serviceAddr = findServiceAddr(serviceName);
+        ServiceInfoSet serviceAddr = findServiceAddr(serviceName);
         serviceSocketCache.cache(serviceName, serviceAddr);
         return serviceAddr;
     }
 
-    private SocketInfo findServiceAddr(String serviceName) throws Exception {
+    private ServiceInfoSet findServiceAddr(String serviceName) throws Exception {
         // 1. 封装并发送
         SocketInfo socketInfo = client.getSocketInfo();
         log.debug("[findServiceAddr]-获取到消费者的socket信息,host: {}, port: {}", socketInfo.getHost(), socketInfo.getPort());
@@ -149,11 +172,11 @@ public class ServiceConsumer<T> {
             log.warn("[ServiceConsumer]-[findServiceAddr]-响应消息不全，缺失项为{}", RpcRegistryResponse.SOCKET_ADDR_MAP_KEY);
             throw new RpcException(RpcErrorEnum.SERVICE_NOT_FOUND, "响应消息有缺失");
         }
-        if (!(o instanceof SocketInfo)) {
+        if (!(o instanceof ServiceInfoSet)) {
             log.error("[ServiceConsumer]-[findServiceAddr]-响应消息类型错误");
             throw new RpcException(RpcErrorEnum.SERVICE_NOT_FOUND, "响应信息有误");
         }
-        return (SocketInfo) o;
+        return (ServiceInfoSet) o;
 
     }
 

@@ -1,17 +1,29 @@
 package com.zyc.rpc.loadbalence;
 
-import com.zyc.rpc.server.ServiceProvider;
+import com.zyc.entity.registry.ServiceInfo;
+import com.zyc.entity.registry.collections.ServiceInfoSet;
+import com.zyc.rpc.loadbalence.impl.RandomLoadBalanceStrategy;
+import lombok.extern.slf4j.Slf4j;
 
-import java.util.List;
-
+@Slf4j
 public class LoadBalancer {
     LoadBalanceStrategy strategy;
 
-    List<ServiceProvider<?>> serviceProviderList;
+    ServiceInfoSet serviceInfoSet;
 
-    public LoadBalancer(LoadBalanceStrategy strategy, List<ServiceProvider<?>> serviceProviderList) {
+    public ServiceInfo select() {
+        ServiceInfo select = strategy.select(serviceInfoSet);
+        log.info("[select]-负载均衡选择对象{}", select);
+        return select;
+    }
+
+    public LoadBalancer() {
+        strategy = new RandomLoadBalanceStrategy();
+    }
+
+    public LoadBalancer(LoadBalanceStrategy strategy, ServiceInfoSet serviceInfoSet) {
         this.strategy = strategy;
-        this.serviceProviderList = serviceProviderList;
+        this.serviceInfoSet = serviceInfoSet;
     }
 
     public LoadBalanceStrategy getStrategy() {
@@ -20,5 +32,13 @@ public class LoadBalancer {
 
     public void setStrategy(LoadBalanceStrategy strategy) {
         this.strategy = strategy;
+    }
+
+    public ServiceInfoSet getServiceInfoSet() {
+        return serviceInfoSet;
+    }
+
+    public void setServiceInfoSet(ServiceInfoSet serviceInfoSet ) {
+        this.serviceInfoSet = serviceInfoSet;
     }
 }
