@@ -1,6 +1,7 @@
 package com.zyc.rpc.registry.handler;
 
 import com.zyc.entity.registry.*;
+import com.zyc.entity.registry.collections.ServiceInfoSet;
 import com.zyc.enums.ResponseStatusEnum;
 import com.zyc.rpc.registry.ServiceRegistry;
 import io.netty.channel.ChannelHandlerContext;
@@ -10,9 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.security.Provider;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 @Slf4j
 public class RegisterCenterRequestHandler extends SimpleChannelInboundHandler<RpcRegistryRequest> {
@@ -50,7 +49,7 @@ public class RegisterCenterRequestHandler extends SimpleChannelInboundHandler<Rp
                 //注册中心获取服务后向客户端返回服务所在的socket地址
                 String service = data.getService();
                 log.info("[ServiceRegistryCenter]-[ChannelInboundHandlerAdapter]-来自 {} 的服务查询请求 - {}", data.getHost() + ":" + data.getPort(), service);
-                Set<ServiceInfo> serviceAddr = serviceRegistry.getServiceAddr(service);
+                ServiceInfoSet serviceAddr = (ServiceInfoSet) serviceRegistry.getServiceAddr(service);
                 log.info("[ServiceRegistryCenter]-[ChannelInboundHandlerAdapter]注册中心查询服务-服务名：{} -结果：{}", service, serviceAddr);
                 ResponseStatusEnum status = (serviceAddr == null ? ResponseStatusEnum.FAIL_GET_SERVICE : ResponseStatusEnum.SUCCESS_GET_SERVICE);
                 Map<String, Object> info = new HashMap<>();
