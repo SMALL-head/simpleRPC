@@ -17,6 +17,9 @@ public class LoadBalancer {
         return select;
     }
 
+    /**
+     * 默认构造函数选择的负载均衡策略为：随机负载均衡
+     */
     public LoadBalancer() {
         strategy = new RandomLoadBalanceStrategy();
     }

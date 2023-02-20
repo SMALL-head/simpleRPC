@@ -18,7 +18,7 @@ public class InMemoryServiceRegistryImpl implements ServiceRegistry {
         ServiceInfoSet serviceInfos = registeredServiceMap.get(service.getCanonicalName());
         if (serviceInfos == null) {
             // 没有任何信息，需要新的set
-            serviceInfos = new ServiceInfoSet();
+            serviceInfos = new ServiceInfoSet(service.getCanonicalName());
             serviceInfos.add(new ServiceInfo(socketInfo, Calendar.getInstance()));
             registeredServiceMap.put(service.getCanonicalName(), serviceInfos);
         } else {
@@ -36,7 +36,7 @@ public class InMemoryServiceRegistryImpl implements ServiceRegistry {
         SocketInfo socketInfo = new SocketInfo(host, port);
         if (serviceInfos == null) {
             // 没有任何信息，需要新的set
-            serviceInfos = new ServiceInfoSet();
+            serviceInfos = new ServiceInfoSet(service);
             serviceInfos.add(new ServiceInfo(socketInfo, Calendar.getInstance()));
             registeredServiceMap.put(service, serviceInfos);
         } else {
@@ -70,7 +70,7 @@ public class InMemoryServiceRegistryImpl implements ServiceRegistry {
 
     @Override
     public boolean updateLastUpdate(String serviceName, String host, int port) {
-        HashSet<ServiceInfo> serviceInfos = registeredServiceMap.get(serviceName);
+        ServiceInfoSet serviceInfos = registeredServiceMap.get(serviceName);
         if (serviceInfos == null) {
             log.error("[updateLastUpdate]-未找到名为{}的服务集群", serviceName);
             return false;
@@ -94,7 +94,7 @@ public class InMemoryServiceRegistryImpl implements ServiceRegistry {
 
         // 2. 超时未更新的服务算为死亡服务，删除
         for (String serviceName : registeredServiceMap.keySet()) {
-            HashSet<ServiceInfo> serviceInfos = registeredServiceMap.get(serviceName);
+            ServiceInfoSet serviceInfos = registeredServiceMap.get(serviceName);
 //            ServiceInfo service = (ServiceInfo) serviceInfos;
             serviceInfos.removeIf(serviceInfo -> {
                 // 当前service更新时间小于上一次检查的时间，代表这个服务的心跳包没有收到，也就说服务异常

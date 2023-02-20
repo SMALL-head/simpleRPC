@@ -3,6 +3,7 @@ package com.zyc.rpcclient;
 import com.zyc.constants.Constants;
 import com.zyc.entity.registry.SocketInfo;
 import com.zyc.rpc.client.ServiceConsumer;
+import com.zyc.rpc.loadbalence.impl.RoundPollLoadBalanceStrategy;
 import com.zyc.rpc.registry.config.RegistryConfig;
 import com.zyc.service.MyService;
 import com.zyc.service.MyServiceImpl;
@@ -20,6 +21,7 @@ public class ClientTest {
         // 声明消费者，并指明对应的服务提供方的名字
         ServiceConsumer<MyService> consumerWithAnnotation = new ServiceConsumer<>(MyService.class, "abc");
         ServiceConsumer<MyService> consumer = new ServiceConsumer<>(MyService.class, "service1");
+        consumer.setLoadBalancerStrategy(new RoundPollLoadBalanceStrategy());
         // 获取执行代理
         MyService serviceProxy1 = consumerWithAnnotation.getServiceProxy();
         MyService serviceProxy2 = consumer.getServiceProxy();

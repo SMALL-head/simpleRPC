@@ -13,6 +13,7 @@ import com.zyc.exception.RpcException;
 import com.zyc.rpc.cache.InMemorySocketCache;
 import com.zyc.rpc.cache.ServiceSocketCache;
 import com.zyc.rpc.client.netty.NettyRpcClient;
+import com.zyc.rpc.loadbalence.LoadBalanceStrategy;
 import com.zyc.rpc.loadbalence.LoadBalancer;
 import com.zyc.rpc.registry.ServiceRegistry;
 import com.zyc.rpc.registry.config.RegistryConfig;
@@ -23,8 +24,6 @@ import java.lang.invoke.TypeDescriptor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -36,8 +35,6 @@ public class ServiceConsumer<T> {
      * service对外不可见，serviceProxy对外可见
      */
     final private T serviceProxy;
-
-    final private Class<?> serviceInterface;
 
     String serviceName;
 
@@ -79,7 +76,7 @@ public class ServiceConsumer<T> {
                 Class<?>[] classTypes = method.getParameterTypes();
 
                 // 3. 封装rpc调用参数，并发送
-                // todo: 增加负载均衡功能
+                // todo: 负载均衡代码应有修改
                 RpcRequest request = new RpcRequest(serviceName, method.getName(), args, classTypes);
                 CompletableFuture<GenericReturn> genericReturnCompletableFuture;
                 // 3.1 装载备选项
@@ -114,7 +111,6 @@ public class ServiceConsumer<T> {
         });
 
         this.client = new NettyRpcClient(RegistryConfig.getHost(), RegistryConfig.getPort());
-        this.serviceInterface = serviceInterface;
         this.serviceName = serviceInterface.getCanonicalName();
     }
 
@@ -173,7 +169,7 @@ public class ServiceConsumer<T> {
             throw new RpcException(RpcErrorEnum.SERVICE_NOT_FOUND, "响应消息有缺失");
         }
         if (!(o instanceof ServiceInfoSet)) {
-            log.error("[ServiceConsumer]-[findServiceAddr]-响应消息类型错误");
+            log.error("[ServiceConsumer]-[findServiceAddr]-响应消息类型错误, {}, {}", o.getClass(), o);
             throw new RpcException(RpcErrorEnum.SERVICE_NOT_FOUND, "响应信息有误");
         }
         return (ServiceInfoSet) o;
@@ -190,5 +186,13 @@ public class ServiceConsumer<T> {
 
     public void setCacheEnable(boolean cacheEnable) {
         this.cacheEnable = cacheEnable;
+    }
+
+    public void setLoadBalancer(LoadBalancer loadBalancer) {
+        this.loadBalancer = loadBalancer;
+    }
+
+    public void setLoadBalancerStrategy(LoadBalanceStrategy strategy) {
+        loadBalancer.setStrategy(strategy);
     }
 }
