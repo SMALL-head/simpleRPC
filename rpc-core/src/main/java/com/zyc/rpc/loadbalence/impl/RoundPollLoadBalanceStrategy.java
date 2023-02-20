@@ -18,14 +18,18 @@ public class RoundPollLoadBalanceStrategy implements LoadBalanceStrategy {
      * key为serviceName，value为指针
      */
     Map<String, Integer> pollingPointerMap = new HashMap<>();
+
     @Override
     public ServiceInfo select(ServiceInfoSet serviceInfoSet) {
         List<ServiceInfo> serviceInfos = serviceInfoSet.stream().toList();
         Integer pointer = pollingPointerMap.get(serviceInfoSet.getServiceName());
+        ServiceInfo serviceInfo;
         if (pointer == null) {
-            throw new LoadBalanceException("轮询指针为null");
+            pollingPointerMap.put(serviceInfoSet.getServiceName(), pointer = 0);
+            serviceInfo = serviceInfos.get(0);
+        } else {
+            serviceInfo = serviceInfos.get(pointer);
         }
-        ServiceInfo serviceInfo = serviceInfos.get(pointer);
         pointer = (pointer + 1) % serviceInfos.size();
         pollingPointerMap.put(serviceInfoSet.getServiceName(), pointer);
         return serviceInfo;

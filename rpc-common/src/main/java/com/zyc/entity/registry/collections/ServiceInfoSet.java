@@ -7,6 +7,9 @@ import java.util.HashSet;
 public class ServiceInfoSet extends HashSet<ServiceInfo> {
     String serviceName;
 
+    public ServiceInfoSet() {
+    }
+
     public ServiceInfoSet(String serviceName) {
         this.serviceName = serviceName;
     }
